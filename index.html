@@ -766,6 +766,36 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .flight-review-actions { flex-direction:column; }
 }
 
+/* Compact entry keeps dishes and safety notices visible; long drink lists opt in. */
+.sheet-quick-summary { flex-shrink:0; padding:0 18px; background:var(--surface); }
+.quick-selected { margin:8px 0; font-size:12px; line-height:1.5; color:var(--ink-2); overflow-wrap:anywhere; max-height:4.5em; overflow-y:auto; }
+.quick-selected strong { color:var(--ink); margin-right:6px; }
+#sheetSaveWarning { margin:8px 0; color:var(--danger); font-size:12px; font-weight:650; max-height:80px; overflow-y:auto; }
+.order-extra { flex-shrink:0; border:1px solid var(--line); border-radius:11px; padding:0 12px; background:var(--surface); }
+.order-extra > summary { display:flex; align-items:center; gap:8px; min-height:48px; padding:8px 0; font-size:13px; font-weight:650; cursor:pointer; list-style:none; }
+.order-extra > summary::-webkit-details-marker { display:none; }
+.order-extra > summary::after { content:"+"; margin-left:auto; color:var(--muted); flex:none; font-size:19px; }
+.order-extra[open] > summary::after { content:"−"; }
+.order-extra > summary > span { font-size:12px; font-weight:500; color:var(--ink-2); overflow-wrap:anywhere; min-width:0; }
+.order-extra[open] > .field-group { padding:8px 0 12px; }
+.order-extra > .drink-cats { margin-top:8px; }
+.order-extra > .chips:last-child { margin-bottom:12px; }
+#orderSheet .sheet-content { gap:14px; }
+#orderSheet .sheet-content > * { flex-shrink:0; }
+#orderSheet .dish-btn { min-height:48px; padding:8px 10px; }
+#orderSheet .dish-btn.on > span:first-child::before { content:"✓ "; font-weight:800; }
+#orderSheet .dish-btn.on { border-width:2px; padding:7px 9px; }
+#orderSheet .service-status { padding:10px 0 0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
+#orderSheet .icon-pill-btn[aria-disabled="true"] { opacity:.4; cursor:default; }
+@media(max-width:767px), (max-width:1019px) and (max-height:500px) {
+  .sheet-quick-summary { padding:0 12px; }
+  #orderSheet .sheet-content { padding-top:10px; padding-bottom:12px; }
+  .order-extra { padding:0 10px; }
+}
+@media(max-height:500px) {
+  .quick-selected { display:none; }
+}
+
 /* Independent from save status: shell availability is not an order backup. */
 .offline-panel { margin:0 28px 4px; border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
 .offline-panel summary { display:flex; align-items:center; gap:7px; cursor:pointer; min-height:36px; list-style:none; }
@@ -898,7 +928,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
         <button type="button" class="step-tab" data-step="s2">🍲 Питание 2</button>
       </div>
 
-      <div class="sheet-content" id="sheetContent" role="tabpanel"></div><div class="sheet-actions" id="sheetActions" aria-label="Действия с заказом"></div>
+      <div id="sheetQuickSummary" class="sheet-quick-summary"></div><div class="sheet-content" id="sheetContent" role="tabpanel"></div><div class="sheet-actions" id="sheetActions" aria-label="Действия с заказом"></div>
     </aside>
   </div>
 
@@ -1059,6 +1089,65 @@ async function initOfflineApp() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && navigator.serviceWorker.controller) checkOfflineReady();
   });
+}
+
+/* Presentation state only: no new order fields, storage keys or network requests. */
+let orderEntryViewKey = "";
+function orderEntryKey() { return [flightKey(S), activeSeatId, activeStep].join("|"); }
+function captureOrderEntryView() {
+  const box = document.getElementById("sheetContent");
+  if (orderEntryViewKey !== orderEntryKey()) return null;
+  const focused = document.activeElement;
+  const attrs = ["id","data-path","data-val","data-dcat","data-drink-target","data-course-status","data-dish-info","data-add-cvu","data-go-step"];
+  const focusAttrs = focused && document.getElementById("orderSheet").contains(focused)
+    ? attrs.filter(a => focused.hasAttribute(a)).map(a => [a, focused.getAttribute(a)]) : [];
+  const summary = focused?.matches("summary") ? focused.parentElement.dataset.orderExtra : null;
+  return {scroll:box.scrollTop, open:[...box.querySelectorAll("[data-order-extra][open]")].map(e => e.dataset.orderExtra),focusAttrs,summary};
+}
+function finishOrderEntryView(view) {
+  const box = document.getElementById("sheetContent");
+  orderEntryViewKey = orderEntryKey();
+  box.querySelectorAll("[data-order-extra]").forEach(e => { e.open = !!view?.open.includes(e.dataset.orderExtra); });
+  const ids = getAllSeatIds(), index = ids.indexOf(activeSeatId);
+  const prev = document.getElementById("btnPrevSeat"), next = document.getElementById("btnNextSeat");
+  // Keep header buttons focusable at boundaries; expose unavailability explicitly.
+  prev.setAttribute("aria-disabled",String(index <= 0));
+  next.setAttribute("aria-disabled",String(index >= ids.length-1));
+  prev.setAttribute("aria-label",index > 0 ? "Предыдущее кресло " + ids[index-1] : "Это первое кресло");
+  next.setAttribute("aria-label",index < ids.length-1 ? "Следующее кресло " + ids[index+1] : "Это последнее кресло");
+  prev.title = prev.getAttribute("aria-label"); next.title = next.getAttribute("aria-label");
+  const forward = document.getElementById("btnNextSeatStep");
+  if (forward) forward.textContent = index < ids.length-1 ? "Далее · " + ids[index+1] + " →" : "К схеме салона";
+  const summary = document.getElementById("sheetQuickSummary");
+  const seat = getSeat(activeSeatId), course = seat[activeStep];
+  summary.replaceChildren();
+  if (course) {
+    const text = document.createElement("p");
+    text.className = "quick-selected";
+    text.innerHTML = `<strong>Выбрано</strong> ${esc([course.z && ("Зак: " + displayName(course.z)),course.m && ("Гор: " + displayName(course.m))].filter(Boolean).join(" · ") || "Блюда пока не выбраны")}`;
+    summary.append(text);
+  }
+  const warning = document.createElement("p"); warning.id = "sheetSaveWarning"; warning.setAttribute("role","status");
+  summary.append(warning); refreshSheetSaveWarning();
+  if (view) {
+    let focus = null;
+    if (view.summary) focus = box.querySelector(`[data-order-extra="${CSS.escape(view.summary)}"] > summary`);
+    else if (view.focusAttrs.length) {
+      const selector = view.focusAttrs.map(([a,v]) => `[${a}="${CSS.escape(v)}"]`).join("");
+      focus = document.getElementById("orderSheet").querySelector(selector);
+    }
+    focus?.focus({preventScroll:true});
+  }
+  box.scrollTop = view ? view.scroll : 0;
+}
+function refreshSheetSaveWarning() {
+  const warning = document.getElementById("sheetSaveWarning");
+  if (!warning) return;
+  warning.hidden = !storageProblem;
+  warning.textContent = storageProblem ? "Не сохранено! Закройте карточку и скачайте JSON-копию. " + storageProblem : "";
+}
+function initQuickOrder() {
+  new MutationObserver(refreshSheetSaveWarning).observe(document.getElementById("saveStatus"), {childList:true,subtree:true,characterData:true});
 }
 
 /* Phone layout is viewport-driven, not user-agent detection: iOS, Android and tablets. */
@@ -2350,7 +2439,6 @@ function renderCourseStep(svcNum) {
 
   return `
     ${seatSafetyNotice(s)}
-    ${renderServiceStatus(svcNum, sv)}
     <!-- Закуска -->
     <div class="field-group">
       <div class="field-label">
@@ -2372,7 +2460,7 @@ function renderCourseStep(svcNum) {
     ` : ""}
 
     <!-- Напиток к трапезе (с категориями) -->
-    <div class="field-group">
+    <details class="order-extra" data-order-extra="drinks"><summary>Напитки к блюдам <span>${esc([sv.zd && ("Зак: " + sv.zd),sv.md && ("Гор: " + sv.md)].filter(Boolean).join(" · ") || "Выбрать")}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Напиток к блюду</span>
         <span style="color:var(--accent); text-transform:none;">${esc([sv.zd && ("Зак: " + sv.zd), sv.md && ("Гор: " + sv.md)].filter(Boolean).join(" • ") || "не выбран")}</span>
@@ -2381,8 +2469,9 @@ function renderCourseStep(svcNum) {
       ${renderDrinkSelector(activeDrinkTarget, activeDrinkVal)}
     </div>
 
+    </details>
     <!-- Чай / Кофе и Десерт -->
-    <div class="field-group">
+    <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(sv.t || "Выбрать")}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Чай / Кофе</span>
         <span style="color:var(--gold); text-transform:none;">${esc(sp.dessert)}</span>
@@ -2391,10 +2480,13 @@ function renderCourseStep(svcNum) {
         ${TEA_LIST.map(t => `<button type="button" class="chip${sv.t === t ? " on" : ""}" data-path="${prefix}t" data-val="${esc(t)}">${esc(displayName(t))}</button>`).join("")}
       </div>
     </div>
+    </details>
+    ${renderServiceStatus(svcNum, sv)}
   `;
 }
 
 function renderStepSheet() {
+  const entryView = captureOrderEntryView();
   const s = getSeat(activeSeatId);
   const allIds = getAllSeatIds();
   const idx = allIds.indexOf(activeSeatId);
@@ -2450,7 +2542,7 @@ function renderStepSheet() {
           <span>${uiIcon("wine")} Аперитив</span>
           <span style="color:var(--ink-2); text-transform:none;">${esc(s.ap || "не выбран")}</span>
         </div>
-        ${renderDrinkSelector("ap", s.ap)}
+        <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(s.ap || "Выбрать")}</span></summary>${renderDrinkSelector("ap", s.ap)}</details>
       </div>
 
       <div class="field-group">
@@ -2484,6 +2576,7 @@ function renderStepSheet() {
     `;
   }
   pinSheetActions(box);
+  finishOrderEntryView(entryView);
 }
 
 /* ============================================================================
@@ -2781,10 +2874,12 @@ function closeMobileSheet() {
 
 function stepSeat(dir) {
   const ids = getAllSeatIds();
-  if (!ids.length) return;
   const idx = ids.indexOf(activeSeatId);
-  activeSeatId = ids[(idx + dir + ids.length) % ids.length];
+  const target = idx + dir;
+  if (idx < 0 || target < 0 || target >= ids.length) return;
+  activeSeatId = ids[target];
   renderAll();
+  document.getElementById(dir > 0 ? "btnNextSeat" : "btnPrevSeat").focus({preventScroll:true});
 }
 
 /* Надёжность данных, независимые обслуживания и переносимые копии. */
@@ -3021,6 +3116,7 @@ function changeOrder(path, value) {
 document.addEventListener("DOMContentLoaded", () => {
   initPhoneUI();
   initOfflineApp();
+  initQuickOrder();
   renderAll();
   if (!storageConflict) saveState();
   const byId = id => document.getElementById(id);
@@ -3114,7 +3210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       clean.querySelector("#offlinePanel").dataset.state = "local";
       for (const id of ["offlineActionNote","offlineVersion"]) clean.querySelector("#"+id).textContent = "";
       for (const id of ["offlineUpdateNote","btnApplyOfflineUpdate"]) clean.querySelector("#"+id).hidden = true;
-      for (const id of ["mainView","sheetContent","sheetActions","modalBox","printArea","toast","flightSummaryPill"]) {
+      for (const id of ["mainView","sheetContent","sheetActions","sheetQuickSummary","modalBox","printArea","toast","flightSummaryPill"]) {
         const el = clean.querySelector("#"+id); if (el) el.replaceChildren();
       }
       clean.querySelectorAll("input").forEach(el => el.removeAttribute("value"));
@@ -3154,6 +3250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault(); tabs[next].click(); tabs[next].focus();
   });
   byId("orderSheet").addEventListener("click",e => {
+    e.target.closest("button")?.focus({preventScroll:true});
     const cat = e.target.closest("[data-dcat]");
     if (cat) { activeDrinkCat = cat.dataset.dcat; renderStepSheet(); syncPressedStates(); return; }
     const target = e.target.closest("[data-drink-target]");
@@ -3183,7 +3280,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.closest("#btnClearSeat")) {
       const before = clone(S); S.seats[activeSeatId] = blankSeat(); saveState(); renderAll(); offerUndo("Заказ кресла " + activeSeatId + " очищен",before); return;
     }
-    if (e.target.closest("#btnNextSeatStep")) { stepSeat(1); byId("sheetContent").scrollTop = 0; }
+    if (e.target.closest("#btnNextSeatStep")) {
+      const ids = getAllSeatIds();
+      if (activeSeatId === ids[ids.length-1]) {
+        closeMobileSheet();
+        byId("mainView").querySelector(`[data-seat="${activeSeatId}"]`)?.focus({preventScroll:true});
+      } else {
+        stepSeat(1);
+        byId("btnNextSeatStep").focus({preventScroll:true});
+      }
+    }
   });
   byId("sheetContent").addEventListener("input",e => {
     const key = ({ inGuestName:"name", inCvu:"cvu", inAllergy:"allergy" })[e.target.id];
