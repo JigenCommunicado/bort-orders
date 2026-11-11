@@ -796,6 +796,70 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .quick-selected { display:none; }
 }
 
+/* Compact controls and scrollable dialogs for the order hand-off. */
+#btnFindFlight { flex:none; display:inline-flex; align-items:center; justify-content:center; width:44px; min-height:44px; padding:0; }
+#btnFindFlight .ic { width:20px; height:20px; }
+#btnGuestEnglish { font-size:12px; font-weight:750; letter-spacing:.03em; }
+#modalBox[data-entry-dialog] { overflow-wrap:anywhere; }
+#flightNumberForm { display:grid; gap:8px; margin-top:12px; }
+#flightNumberMatches:empty { display:none; }
+.entry-readback-tools,.entry-dialog-actions { display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.entry-readback-tools { margin:4px 0 12px; }
+.entry-readback-tools button,.entry-dialog-actions button { min-height:44px; }
+.entry-dialog-actions { position:sticky; bottom:0; background:var(--surface); margin-top:12px; padding:8px 0 0; border-top:1px solid var(--line); flex-wrap:wrap; }
+.entry-dialog-actions .primary { flex:1; }
+.entry-readback-section,.entry-english-meal { padding:10px 12px; margin:8px 0; border:1px solid var(--line); border-radius:12px; }
+.entry-english-meal .entry-readback-section { border:none; padding:3px 0; }
+.entry-english-meal .order-extra { margin:8px 0; }
+.entry-readback-section h3,.entry-english-meal h3 { font-size:15px; }
+.entry-readback-section dl,.entry-readback-section ul,.entry-english-meal details ul { margin:6px 0; }
+.entry-readback-section ul,.entry-english-meal details ul { padding-inline-start:20px; }
+.entry-readback-section li,.entry-english-meal details li { margin:4px 0; }
+.entry-readback-section dl > div { display:grid; grid-template-columns:minmax(80px,1fr) minmax(0,2fr); gap:8px; padding:4px 0; }
+.entry-readback-section dt { color:var(--muted); }
+.entry-readback-section dd { margin:0; }
+.entry-readback-notes > * { margin:6px 0; }
+.drink-multi-hint { margin:6px 0; }
+#orderSheet [data-path="ap"].on > span::before,#orderSheet [data-path$=".zd"].on > span::before,#orderSheet [data-path$=".md"].on > span::before { content:"✓ "; }
+#orderSheet [data-path$=".t"].on::before { content:"✓ "; }
+@media(max-width:767px), (max-width:1019px) and (max-height:500px) {
+  #btnFindFlight { border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+  #btnGuestEnglish { padding:0 5px; }
+}
+
+#sheetDragHandle { display:none; }
+@media(max-width:767px), (max-width:1019px) and (max-height:500px) {
+  #orderSheet.open { transform:translate3d(var(--sheet-drag-x,0px),var(--sheet-drag-y,0px),0); }
+  #orderSheet.open[data-sheet-drag] { transition:none; }
+  /* Keep the outside edges native for OS/browser navigation gestures. */
+  #orderSheet .sheet-header { margin-inline:24px; padding-inline:0; touch-action:pan-y pinch-zoom; user-select:none; -webkit-user-select:none; }
+  #orderSheet #btnPrevSeat { order:0; }
+  #orderSheet #sheetSeatTitle { flex:1; min-width:0; margin-right:0; }
+  #orderSheet #sheetSeatTitle small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-left:0; }
+  #sheetDragHandle {
+    display:grid; place-items:center; align-self:center; flex:none;
+    width:min(220px,100%); height:28px; touch-action:pan-x pinch-zoom;
+    user-select:none; -webkit-user-select:none;
+  }
+  #sheetDragHandle::before { content:""; grid-area:1/1; width:42px; height:4px; border-radius:999px; background:var(--muted); opacity:.55; }
+  #sheetDragHint {
+    display:none; grid-area:1/1; padding:3px 9px; border-radius:999px;
+    background:var(--surface-2); color:var(--ink); font-size:12px; font-weight:700;
+    line-height:16px; white-space:nowrap; pointer-events:none;
+  }
+  #orderSheet[data-sheet-drag] #sheetDragHandle::before { visibility:hidden; }
+  #orderSheet[data-sheet-drag] #sheetDragHint { display:block; }
+  #orderSheet[data-sheet-drag="ready"] #sheetDragHint { background:var(--accent-tint); color:var(--accent); }
+}
+@media(max-width:359px) {
+  #orderSheet #sheetSeatTitle .sheet-seat-number { font-size:16px; white-space:nowrap; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #orderSheet.open[data-sheet-drag] { transform:translateY(0); }
+  #orderSheet { transition:none; }
+}
+@media print { #sheetDragHandle { display:none!important; } }
+
 /* Independent from save status: shell availability is not an order backup. */
 .offline-panel { margin:0 28px 4px; border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
 .offline-panel summary { display:flex; align-items:center; gap:7px; cursor:pointer; min-height:36px; list-style:none; }
@@ -868,6 +932,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
         </div><div class="flight-pill" id="flightSummaryPill"></div><div class="phone-flight-meta phone-only" id="phoneFlightMeta"></div></div>
       </div>
 
+      <button type="button" class="icon-pill-btn" id="btnFindFlight" aria-label="Поиск рейса по номеру" title="Поиск рейса по номеру" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></button>
       <button type="button" class="phone-menu-button phone-only" id="btnPhoneMenu" aria-label="Меню рейса и настройки" aria-haspopup="dialog" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="top-actions"><button type="button" class="icon-pill-btn" id="btnFlightSummary" aria-haspopup="dialog">Сводка рейса</button>
         <label class="date-control">Дата рейса <input type="date" id="flightDate" aria-label="Дата рейса"></label>
@@ -912,10 +977,12 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 
     <!-- 3. ЛАКОНИЧНАЯ ШТОРКА ПРИЁМА ЗАКАЗА (ПОШАГОВЫЕ ВКЛАДКИ) -->
     <aside class="order-sheet" id="orderSheet" aria-label="Заказ по креслу">
+      <div id="sheetDragHandle" aria-hidden="true"><span id="sheetDragHint"></span></div>
       <div class="sheet-header">
         <button type="button" class="icon-pill-btn" id="btnPrevSeat" aria-label="Предыдущее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6"/></svg></button>
         <div class="sheet-seat-title" id="sheetSeatTitle">Кресло 1A</div>
         <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="icon-pill-btn" id="btnGuestEnglish" aria-label="Меню гостя на английском" title="Menu in English" aria-haspopup="dialog"><span lang="en">EN</span></button>
           <button type="button" class="icon-pill-btn" id="btnToggleServed" hidden>Подано</button>
           <button type="button" class="icon-pill-btn" id="btnNextSeat" aria-label="Следующее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 6 6 6-6 6"/></svg></button>
           <button type="button" class="icon-pill-btn only-mobile" id="btnCloseSheet" aria-label="Закрыть заказ"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
@@ -1089,6 +1156,414 @@ async function initOfflineApp() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && navigator.serviceWorker.controller) checkOfflineReady();
   });
+}
+
+/* Standalone translations for the built-in guest menu. Unknown values stay unchanged. */
+const GUEST_ENGLISH_NAMES = Object.freeze({
+  "🧀 Сырно-мясная нарезка": "🧀 Cheese and cold cuts",
+  "🍳 Омлет с грибами": "🍳 Mushroom omelette",
+  "🥞 Блинчики с яблоком": "🥞 Apple pancakes",
+  "🥣 Каша гурьевская": "🥣 Guryev porridge",
+  "🧀 Сыр Ларец, Бри и индейка": "🧀 Larets cheese, Brie and turkey",
+  "🍳 Фриттата с цуккини": "🍳 Zucchini frittata",
+  "🥞 Оладьи с вишней": "🥞 Pancakes with cherries",
+  "🥣 Каша рисовая с персиком": "🥣 Rice porridge with peach",
+  "🧀 Качотта с пажитником и пастрами": "🧀 Caciotta with fenugreek and pastrami",
+  "🍳 Фриттата со шпинатом": "🍳 Spinach frittata",
+  "🥞 Сырники с вишней": "🥞 Cottage cheese pancakes with cherries",
+  "🥣 Каша пшеничная с яблоком": "🥣 Wheat porridge with apple",
+  "🧀 Камамбер, Чеддер и куриное филе": "🧀 Camembert, Cheddar and chicken fillet",
+  "🍳 Омлет со шпинатом и сыром": "🍳 Spinach and cheese omelette",
+  "🥞 Блины с гуляшом из курицы": "🥞 Pancakes with chicken goulash",
+  "🥣 Каша пшённая с тыквой": "🥣 Millet porridge with pumpkin",
+  "🦆 Утиная грудка и индейка": "🦆 Duck breast and turkey",
+  "🍳 Омлет с сыром Бешамель": "🍳 Cheese omelette with béchamel",
+  "🥩 Ростбиф, курица и Бри": "🥩 Roast beef, chicken and Brie",
+  "🥞 Блинчик с муссом из лосося": "🥞 Pancake with salmon mousse",
+  "🧀 Камамбер, Гауда и говядина": "🧀 Camembert, Gouda and beef",
+  "🥞 Блинчик с гуляшом из курицы": "🥞 Pancake with chicken goulash",
+  "🧀 Камамбер, Чеддер и курица": "🧀 Camembert, Cheddar and chicken",
+  "🐟 Рыбная: Лосось х/к и мусс": "🐟 Fish starter: cold-smoked salmon and mousse",
+  "🥩 Мясная: Пастрами и мусс": "🥩 Meat starter: pastrami and mousse",
+  "🐟 Филе лосося с песто": "🐟 Salmon fillet with pesto",
+  "🥩 Кебаб из баранины": "🥩 Lamb kebab",
+  "🍗 Грудка в жёлтом карри": "🍗 Chicken breast in yellow curry",
+  "🐟 Рыбная: Гравлакс и тартар": "🐟 Fish starter: gravlax and tartare",
+  "🥩 Мясная: Брезаола и грудка": "🥩 Meat starter: bresaola and chicken breast",
+  "🐟 Судак в томатном соусе": "🐟 Pike-perch in tomato sauce",
+  "🥩 Баранина с вишней и полентой": "🥩 Lamb with cherries and polenta",
+  "🍗 Грудка с брокколи и рисом": "🍗 Chicken breast with broccoli and rice",
+  "🐟 Рыбная: Лосось + Салат": "🐟 Fish starter: salmon and salad",
+  "🥩 Мясная: Индейка + Салат": "🥩 Meat starter: turkey and salad",
+  "🐟 Рыбная: Гравлакс + Салат": "🐟 Fish starter: gravlax and salad",
+  "🥩 Мясная: Брезаола + Салат": "🥩 Meat starter: bresaola and salad",
+  "🐟 Рыбная: Лосось и мусс креветок": "🐟 Fish starter: salmon and shrimp mousse",
+  "🥩 Мясная: Рулет с грибами": "🥩 Meat starter: chicken breast stuffed with mushrooms",
+  "🐟 Треска с жёлтым рисом": "🐟 Cod with yellow rice",
+  "🥩 Гуляш венгерский с пюре": "🥩 Hungarian goulash with mashed potatoes",
+  "🍗 Курица Терияки с пастой Орзо": "🍗 Teriyaki chicken with orzo",
+  "🐟 Рыбная: Гравлакс и оладьи": "🐟 Fish starter: gravlax and pancakes",
+  "🥩 Мясная: Ростбиф и сыр васаби": "🥩 Meat starter: roast beef and wasabi cheese",
+  "🐟 Треска в мандариновом соусе": "🐟 Cod in mandarin sauce",
+  "🥩 Бефстроганов с пюре": "🥩 Beef Stroganoff with mashed potatoes",
+  "🍗 Курица Буна с диким рисом": "🍗 Bhuna chicken with wild rice",
+  "🐟 Рыбная ГМС: Лосось и креветки": "🐟 Fish starter: salmon and shrimp",
+  "🥩 Мясная ГМС: Грудка с грибами": "🥩 Meat starter: chicken breast with mushrooms",
+  "🐟 Палтус Конфи с диким рисом": "🐟 Halibut confit with wild rice",
+  "🥩 Баранья лопатка с сельдереем": "🥩 Lamb shoulder with celery",
+  "🍗 Рулет из перепёлки": "🍗 Quail roulade",
+  "🐟 Рыбная ГМС: Лосось и муксун": "🐟 Fish starter: salmon and muksun whitefish",
+  "🥩 Мясная ГМС: Пастрами и су-вид": "🥩 Meat starter: beef pastrami and sous-vide chicken",
+  "🐟 Филе Дорадо с брокколи": "🐟 Sea bream fillet with broccoli",
+  "🥩 Говяжьи щёчки с полентой": "🥩 Beef cheeks with polenta",
+  "🍗 Бедро в горчичном соусе": "🍗 Chicken thigh in mustard sauce",
+  "🍗 Бедро в меду с тыквой и киноа": "🍗 Honey-glazed chicken thigh with pumpkin and quinoa",
+  "🥩 Вырезка говяжья с Орзо": "🥩 Beef tenderloin with orzo",
+  "🐟 Тартар из лосося и авокадо": "🐟 Salmon and avocado tartare",
+  "🍗 Грудка карри с гречкой": "🍗 Curry chicken breast with buckwheat",
+  "🥞 Блинчики с лососем и сыром": "🥞 Pancakes with salmon and cheese",
+  "🐟 Треска с красным рисом": "🐟 Cod with red rice",
+  "🍗 Филе карри и мясной мусс": "🍗 Curry chicken fillet and meat mousse",
+  "🥩 Гуляш из говядины с пюре": "🥩 Beef goulash with mashed potatoes",
+  "🍗 Индейка карри с Птитимом": "🍗 Turkey curry with ptitim pasta",
+  "🥩 Гуляш из говядины": "🥩 Beef goulash",
+  "🍗 Бедро с гречкой васаби": "🍗 Chicken thigh with wasabi buckwheat",
+  "Йогурт Epica 130г + Джем клубничный 30г": "Epica yogurt 130 g + strawberry jam 30 g",
+  "Йогурт Epica 130г + Джем абрикосовый 30г": "Epica yogurt 130 g + apricot jam 30 g",
+  "Биойогурт ЭкоНива 75г + Джем клубничный": "EkoNiva bio yogurt 75 g + strawberry jam",
+  "Биойогурт ЭкоНива 75г + Джем абрикосовый": "EkoNiva bio yogurt 75 g + apricot jam",
+  "Мороженое ванильное 60г с миндалём + Йогурт Epica": "Vanilla ice cream 60 g with almonds + Epica yogurt",
+  "Пирожное «Медовик» 70г + Йогурт Epica": "Honey cake 70 g + Epica yogurt",
+  "Панна-котта карамельная 75г + Йогурт Epica": "Caramel panna cotta 75 g + Epica yogurt",
+  "Пирожное «Медовик» / Вишнёвый клафути + Йогурт Epica": "Honey cake / cherry clafoutis + Epica yogurt",
+  "Пирожное «Шоколадный Драмбуи» 72г + Йогурт Epica": "Chocolate Drambuie cake 72 g + Epica yogurt",
+  "Мороженое ванильное 60г с миндалём": "Vanilla ice cream 60 g with almonds",
+  "Пирожное «Медовик» (от Новикова) 70г": "Novikov honey cake 70 g",
+  "Пирожное «Наполеон» 70г": "Napoleon cake 70 g",
+  "Яблочный пирог с ванильным соусом / Ореховый пирог": "Apple pie with vanilla sauce / nut pie",
+  "Вишнёвый клафути / Яблочный пирог": "Cherry clafoutis / apple pie",
+  "Пирожное «Шоколадный Драмбуи» 72г": "Chocolate Drambuie cake 72 g",
+  "Пирожное «Вишнёвый клафути» 65г": "Cherry clafoutis cake 65 g",
+  "Булочка деревенская, Круассан, Хлеб чёрный": "Rustic roll, croissant, dark bread",
+  "Булочка французская, Круассан, Хлеб чёрный": "French roll, croissant, dark bread",
+  "Круассан, Булочка деревенская, Хлеб чёрный": "Croissant, rustic roll, dark bread",
+  "Булочка Брецель, Булочка деревенская, Хлеб чёрный": "Pretzel roll, rustic roll, dark bread",
+  "Булочка Брецель, Хлеб чёрный": "Pretzel roll, dark bread",
+  "🥂 Игристое": "🥂 Sparkling wine",
+  "🍷 Вино": "🍷 Wine",
+  "🥃 Крепкое": "🥃 Spirits",
+  "🍸 Коктейли": "🍸 Cocktails",
+  "🧃 Б/А": "🧃 Non-alcoholic",
+  "Чай чёрный": "Black tea",
+  "Чай с лимоном": "Tea with lemon",
+  "Чай зелёный": "Green tea",
+  "Кофе американо": "Americano",
+  "Кофе со сливками": "Coffee with cream",
+  "Кофе с молоком": "Coffee with milk",
+  "Вода с лимоном": "Water with lemon",
+  "Анима Миллезимато": "Anima Millesimato Brut",
+  "Высокий Берег Брют": "Vysokiy Bereg Extra Brut",
+  "Креман Bestheim": "Bestheim Crémant d’Alsace Brut",
+  "Абрау-Дюрсо 1870": "Abrau-Durso 1870 Brut",
+  "Кюве Александр": "Cuvée Alexandre Blanc de Blancs",
+  "Совиньон Захарьин (Бел)": "Zakharyin Sauvignon Blanc (white)",
+  "Ресто Грюнер (Бел)": "Resto Grüner Veltliner (white)",
+  "Пино Гриджио (Бел)": "Anima Pinot Grigio (white)",
+  "Каберне Перовских (Кр)": "Perovskikh Cabernet Sauvignon (red)",
+  "Анима Мисчела (Кр)": "Anima Miscela (red)",
+  "Пино Неро (Кр)": "Anima Pinot Nero–Sangiovese (red)",
+  "Водка Онегин (50мл)": "Onegin vodka",
+  "Виски Ballantine's": "Ballantine’s whisky",
+  "Виски Black Ram": "Black Ram whisky",
+  "Коньяк Roullet VS": "Roullet VS Cognac",
+  "Коньяк Арарат 7л": "Ararat Ani 7-year-old Armenian brandy",
+  "Пиво Балтика 7": "Baltika 7 lager",
+  "Виски-Закат": "Whisky Sunset",
+  "Коко": "Coco",
+  "Для своих": "For Friends",
+  "Каскад": "Cascade",
+  "Кровавая Мэри": "Bloody Mary",
+  "Микоян Кап": "Mikoyan Cup",
+  "Яблочный штрудель": "Apple Strudel cocktail",
+  "Вода б/г": "Still water",
+  "Вода с/г": "Sparkling water",
+  "Сок Апельсин": "Orange juice",
+  "Сок Яблоко": "Apple juice",
+  "Сок Томат": "Tomato juice",
+  "Мультифрукт": "Mixed fruit juice",
+  "Морс клюква": "Cranberry drink",
+  "Тархун": "Tarragon soda",
+  "Байкал": "Baikal herbal soda",
+  "Кола": "Cola",
+  "Биттер Лемон": "Bitter lemon tonic",
+  "Сок Rich": "Rich juice (orange, apple or tomato)",
+  "Вода Славда": "Slavda mineral water",
+  "Вода Баранчинская": "Baranchinskaya mineral water",
+  "Вода Шифа Су": "Shifa Su mineral water",
+  "Суп-крем из тыквы 150г с семечками (термос)": "Pumpkin cream soup with seeds, 150 g",
+  "Суп куриный 130г с вермишелью (термос)": "Chicken noodle soup, 130 g",
+  "Evervess Роял": "Evervess Royal (Black Royal or lemon-lime)"
+});
+
+function guestEnglishName(value) {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(GUEST_ENGLISH_NAMES, value)
+    ? GUEST_ENGLISH_NAMES[value]
+    : value;
+}
+
+/* Flight lookup and passenger-facing dialogs. All data and translations are local. */
+let pendingReadback = null;
+let entryDialogOpener = null;
+
+function openEntryDialog(kind, opener, title, body, lang = "ru") {
+  const modal = document.getElementById("modalBack");
+  if (modal.classList.contains("open")) return;
+  opener.focus({preventScroll:true});
+  entryDialogOpener = opener;
+  const box = document.getElementById("modalBox");
+  box.dataset.entryDialog = kind;
+  box.lang = lang;
+  box.innerHTML = `<div class="modal-heading"><h2 id="entryDialogTitle">${esc(title)}</h2><button type="button" class="icon-pill-btn" data-close-modal aria-label="${lang === "en" ? "Close" : "Закрыть"}">${uiIcon("close")}</button></div>${body}`;
+  modal.setAttribute("aria-labelledby","entryDialogTitle");
+  modal.classList.add("open");
+}
+function clearEntryDialog() {
+  const box = document.getElementById("modalBox");
+  if (!box.dataset.entryDialog) return;
+  delete box.dataset.entryDialog;
+  box.removeAttribute("lang");
+  document.getElementById("modalBack").removeAttribute("aria-labelledby");
+  box.replaceChildren();
+  pendingReadback = null;
+  entryDialogOpener = null;
+}
+
+function flightSearchMatches(query) {
+  const digits = query.trim().replace(/^(?:FV|ФВ)\s*/iu, "");
+  if (!/^\d+$/.test(digits)) return [];
+  return FLIGHTS_OZP.filter(f => f.no.includes(digits)).sort((a,b) =>
+    Number(b.no === digits) - Number(a.no === digits) || Number(b.no.startsWith(digits)) - Number(a.no.startsWith(digits)) || Number(a.no) - Number(b.no));
+}
+function renderFlightSearchResults() {
+  const input = document.getElementById("flightNumberQuery");
+  const matches = flightSearchMatches(input.value);
+  document.getElementById("flightNumberStatus").textContent = !input.value.trim() ? "Введите номер или его часть." : matches.length ? `Найдено: ${matches.length}` : "Рейс не найден в справочнике. Проверьте номер.";
+  document.getElementById("flightNumberMatches").innerHTML = matches.map(f => `<button type="button" class="session-btn" data-flight-match="${esc(f.no)}"><strong>FV ${esc(f.no)}</strong><span>${esc(f.route)}</span>${f.no === S.flightNo ? "<small>Открыт сейчас</small>" : ""}</button>`).join("");
+}
+function chooseFlightMatch(no) {
+  closeModal();
+  if (no !== S.flightNo) applyFlightSelection(no,S.cycle,true);
+}
+function openFlightNumberSearch(opener) {
+  openEntryDialog("flight", opener, "Поиск рейса", `<form id="flightNumberForm"><label class="field-group"><span class="field-label">Номер рейса FV</span><input class="in" type="search" id="flightNumberQuery" data-modal-focus inputmode="numeric" autocomplete="off" maxlength="16" placeholder="Например, 6253"></label><p class="subtle">Дата рейса: ${esc(S.date)}</p><p id="flightNumberStatus" class="subtle" role="status"></p><div class="session-list" id="flightNumberMatches"></div></form>`);
+  renderFlightSearchResults();
+  // Focus in the tap event, not just in the dialog observer, for the iOS keyboard.
+  document.getElementById("flightNumberQuery").focus({preventScroll:true});
+}
+
+function requestSeatForward(opener, allowCabin = false) {
+  const ids = getAllSeatIds();
+  const index = ids.indexOf(activeSeatId);
+  if (index < 0 || (!allowCabin && index === ids.length - 1)) return;
+  const destination = ids[index+1] || "";
+  const seat = getSeat(activeSeatId);
+  const hasItems = seat.ap || hasCourseOrder(seat.s1) || (S.spec2Code && hasCourseOrder(seat.s2));
+  const move = () => {
+    if (destination) stepSeat(1);
+    else closeMobileSheet();
+    const focus = () => (destination ? document.getElementById(opener.id) : document.querySelector(`[data-seat="${CSS.escape(activeSeatId)}"]`))?.focus({preventScroll:true});
+    // The existing dialog observer removes inert after the close event.
+    queueMicrotask(focus);
+  };
+  if (!hasItems && !seat.allergy && !seat.cvu && !seat.wake) { move(); return; }
+  if (document.getElementById("modalBack").classList.contains("open")) return;
+  pendingReadback = { key:flightKey(S), seat:activeSeatId, destination, move };
+  openEntryDialog("readback",opener,`Сверка заказа · ${activeSeatId}`,`<div class="entry-readback-tools"><p class="subtle" id="readbackHint">Повторите заказ гостю перед переходом.</p><button type="button" class="chip" id="btnReadbackEnglish" aria-pressed="false" aria-label="Показать заказ на английском">EN</button></div><div id="readbackItems"></div><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>К заказу</button><button type="button" class="btn primary" id="btnConfirmReadback">${destination ? `Подтвердить → ${esc(destination)}` : "Подтвердить и к салону"}</button></div>`);
+  renderReadback(false);
+}
+function renderReadback(english) {
+  const seat = getSeat(activeSeatId);
+  const label = (ru,en) => english ? en : ru;
+  const name = value => displayName(english ? guestEnglishName(value) : value);
+  const row = (title,values) => values.length ? `<div><dt>${title}</dt><dd>${values.map(value => esc(name(value))).join(" · ")}</dd></div>` : "";
+  const section = (heading,rows) => rows ? `<section class="entry-readback-section"><h3>${heading}</h3><dl>${rows}</dl></section>` : "";
+  const courses = (S.spec2Code ? [1,2] : [1]).map(n => {
+    const c = seat["s"+n];
+    return section(label("Питание", "Meal service") + " " + n,
+      row(label("Закуска","Starter"), c.z ? [c.z] : []) + row(label("Напитки к закуске","Drinks with starter"),drinkChoices(c,"zd")) +
+      row(label("Горячее","Main course"), c.m ? [c.m] : []) + row(label("Напитки к горячему","Drinks with main course"),drinkChoices(c,"md")) +
+      row(label("Чай / кофе","Tea / coffee"),drinkChoices(c,"t")));
+  }).join("");
+  const items = document.getElementById("readbackItems");
+  items.lang = english ? "en" : "ru";
+  const drinks = drinkChoices(seat,"ap");
+  items.innerHTML = (drinks.length ? section(label("Аперитивы","Aperitifs"),row(label("Напитки","Drinks"),drinks)) : "") + courses || `<p class="subtle">${label("Блюда и напитки пока не выбраны.","No food or drinks selected yet.")}</p>`;
+  // Free text stays in the original language; never send it for translation.
+  if (seat.allergy || seat.cvu || seat.wake) items.insertAdjacentHTML("beforeend", `<div class="entry-readback-notes" lang="ru">${english ? '<p lang="en" class="subtle">Guest notes below are shown in their original language. Please confirm allergies and requests with the cabin crew.</p>' : ""}${seatSafetyNotice(seat)}${seat.wake && seat.wake !== "Не будить" ? `<div class="seat-request">Режим отдыха: ${esc(seat.wake)}</div>` : ""}</div>`);
+  const warning = document.createElement("p");
+  warning.id = "readbackSaveWarning"; warning.className = "safety-note"; warning.lang = "ru"; warning.setAttribute("role","status");
+  items.append(warning);
+  refreshReadbackWarning();
+}
+function refreshReadbackWarning() {
+  const warning = document.getElementById("readbackSaveWarning");
+  if (!warning) return;
+  warning.hidden = !storageProblem;
+  warning.textContent = storageProblem;
+}
+
+function englishMenuList(title, values) {
+  return values.length ? `<section class="entry-readback-section"><h4>${title}</h4><ul>${values.map(value => `<li>${esc(value)}</li>`).join("")}</ul></section>` : "";
+}
+function openGuestEnglishMenu(opener) {
+  const en = value => displayName(guestEnglishName(value));
+  const menus = (S.spec2Code ? [1,2] : [1]).map(n => {
+    const spec = SPECS[S["spec"+n+"Code"]];
+    if (!spec) return "";
+    return `<section class="entry-english-meal"><h3>Meal service ${n}</h3>${englishMenuList("Starters",(spec.starters || []).map(dish => en(dish.short)))}${englishMenuList("Main courses",(spec.mains || []).map(dish => en(dish.short)))}${englishMenuList("Soup",spec.soup ? [en(spec.soup)] : [])}${englishMenuList("Dessert",spec.dessert ? [en(spec.dessert)] : [])}${englishMenuList("Bread",spec.bread ? [en(spec.bread)] : [])}</section>`;
+  }).join("");
+  const drinks = DRINK_CATS.map(category => {
+    const options = getFilteredDrinksByCat(category.id).filter(drink => !drink.restricted).map(drink => `${en(drink.short)} · ${drink.ml} ml`);
+    return options.length ? `<details class="order-extra"><summary>${esc(en(category.label))}</summary><ul>${options.map(option => `<li>${esc(option)}</li>`).join("")}</ul></details>` : "";
+  }).join("");
+  openEntryDialog("english",opener,"Menu in English",`<p class="safety-note">Please tell your cabin crew about any food allergies or dietary requirements. Ask the crew to confirm availability and ingredients.</p>${menus}<section class="entry-english-meal"><h3>Drinks</h3>${drinks}${englishMenuList("Tea and coffee",TEA_LIST.map(en))}</section>`,"en");
+}
+
+function initServiceFlow() {
+  const modal = document.getElementById("modalBack");
+  document.getElementById("btnFindFlight").addEventListener("click",e => openFlightNumberSearch(e.currentTarget));
+  document.getElementById("btnGuestEnglish").addEventListener("click",e => openGuestEnglishMenu(e.currentTarget));
+  modal.addEventListener("input",e => { if (e.target.id === "flightNumberQuery") renderFlightSearchResults(); });
+  modal.addEventListener("submit",e => {
+    if (e.target.id !== "flightNumberForm") return;
+    e.preventDefault();
+    const query = document.getElementById("flightNumberQuery").value.trim().replace(/^(?:FV|ФВ)\s*/iu, "");
+    const matches = flightSearchMatches(query);
+    const match = matches.find(f => f.no === query) || (matches.length === 1 ? matches[0] : null);
+    if (match) chooseFlightMatch(match.no);
+  });
+  modal.addEventListener("click",e => {
+    const match = e.target.closest("[data-flight-match]");
+    if (match) { chooseFlightMatch(match.dataset.flightMatch); return; }
+    const language = e.target.closest("#btnReadbackEnglish");
+    if (language) {
+      const english = language.getAttribute("aria-pressed") !== "true";
+      language.setAttribute("aria-pressed",String(english));
+      language.textContent = english ? "RU" : "EN";
+      language.setAttribute("aria-label",english ? "Показать заказ на русском" : "Показать заказ на английском");
+      renderReadback(english);
+      return;
+    }
+    if (!e.target.closest("#btnConfirmReadback") || !pendingReadback) return;
+    const {key,seat,destination,move} = pendingReadback;
+    const ids = getAllSeatIds();
+    const current = flightKey(S) === key && activeSeatId === seat && (ids[ids.indexOf(seat)+1] || "") === destination;
+    closeModal();
+    if (current) move();
+  });
+  new MutationObserver(refreshReadbackWarning).observe(document.getElementById("saveStatus"),{childList:true,characterData:true,subtree:true});
+}
+
+/* Swipe feedback is transient; all actions use the existing seat and sheet paths. */
+function initSheetGestures() {
+  const sheet = document.getElementById("orderSheet");
+  const header = sheet.querySelector(".sheet-header");
+  const handle = document.getElementById("sheetDragHandle");
+  const hint = document.getElementById("sheetDragHint");
+  const modal = document.getElementById("modalBack");
+  const viewport = window.visualViewport;
+  let drag = null, pendingFrame = 0;
+  const canDrag = () => phoneLayout.matches && sheet.classList.contains("open") &&
+    !modal.classList.contains("open") && !document.body.classList.contains("phone-keyboard-open") &&
+    (!viewport || viewport.scale <= 1.05);
+
+  function clearPreview() {
+    if (!sheet.dataset.sheetDrag) return;
+    delete sheet.dataset.sheetDrag;
+    sheet.style.removeProperty("--sheet-drag-x");
+    sheet.style.removeProperty("--sheet-drag-y");
+    hint.textContent = "";
+  }
+  function cancel() {
+    cancelAnimationFrame(pendingFrame);
+    pendingFrame = 0;
+    drag = null;
+    clearPreview();
+  }
+  function start(e) {
+    if (!canDrag() || e.pointerType !== "touch" || !e.isPrimary ||
+        e.target.closest('button, a, input, select, textarea, label, [contenteditable], [role="button"]')) return;
+    const ids = getAllSeatIds();
+    const index = ids.indexOf(activeSeatId);
+    if (index < 0) return;
+    drag = {id:e.pointerId, x:e.clientX, y:e.clientY, key:orderEntryKey(),
+      down:e.currentTarget === handle, locked:false, prev:ids[index-1], next:ids[index+1]};
+  }
+  function measure(e) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    const distance = drag.down ? dy : Math.abs(dx);
+    const cross = drag.down ? Math.abs(dx) : Math.abs(dy);
+    const onAxis = distance >= 10 && distance >= cross * 1.4;
+    return {dx, distance, cross, onAxis, threshold:drag.down ? 76 : 60};
+  }
+  function stillValid() { return canDrag() && drag.key === orderEntryKey(); }
+
+  header.addEventListener("pointerdown",start);
+  handle.addEventListener("pointerdown",start);
+  // Observe the whole window so a second contact anywhere cancels the drag, and
+  // a release outside the starting surface is handled. No preventDefault: let
+  // the browser arbitrate scrolling and pinch zoom via the scoped touch-action.
+  window.addEventListener("pointerdown",e => {
+    if (drag && e.pointerType === "touch" && e.pointerId !== drag.id) cancel();
+  },{capture:true, passive:true});
+  window.addEventListener("pointermove",e => {
+    if (!drag || drag.id !== e.pointerId) return;
+    if (!stillValid()) { cancel(); return; }
+    const {dx, distance, cross, onAxis, threshold} = measure(e);
+    if (!drag.locked && !onAxis) {
+      if (cross >= 18 || distance <= -12) cancel();
+      return;
+    }
+    if (!onAxis) { clearPreview(); return; }
+    drag.locked = true;
+    const dest = dx < 0 ? drag.next : drag.prev;
+    const available = drag.down || !!dest;
+    const offset = Math.min(distance * (available ? 0.45 : 0.16), drag.down ? 96 : available ? 54 : 18);
+    sheet.dataset.sheetDrag = available && distance >= threshold ? "ready" : "tracking";
+    sheet.style.setProperty("--sheet-drag-x", `${drag.down ? 0 : Math.sign(dx) * offset}px`);
+    sheet.style.setProperty("--sheet-drag-y", `${drag.down ? offset : 0}px`);
+    const label = drag.down ? "↓ Закрыть карточку" : dx < 0
+      ? (dest ? `← Следующее кресло · ${dest}` : "Это последнее кресло")
+      : (dest ? `Предыдущее кресло · ${dest} →` : "Это первое кресло");
+    if (hint.textContent !== label) hint.textContent = label;
+  },{capture:true, passive:true});
+  window.addEventListener("pointerup",e => {
+    if (!drag || drag.id !== e.pointerId) return;
+    const {down, prev, next, locked, key} = drag;
+    const {dx, distance, onAxis, threshold} = measure(e);
+    const commit = locked && stillValid() && onAxis && distance >= threshold;
+    cancel();
+    if (!commit) return;
+    // Let the browser finish the contact before making its original target inert.
+    pendingFrame = requestAnimationFrame(() => {
+      pendingFrame = 0;
+      if (drag || !canDrag() || key !== orderEntryKey()) return;
+      if (down) closeMobileSheet();
+      else if (dx < 0 && next) requestSeatForward(document.getElementById("btnNextSeat"));
+      else if (dx > 0 && prev) stepSeat(-1);
+    });
+  },{capture:true, passive:true});
+  for (const type of ["pointercancel", "lostpointercapture"]) {
+    window.addEventListener(type,e => { if (drag?.id === e.pointerId) cancel(); },true);
+  }
+  window.addEventListener("resize",cancel);
+  window.addEventListener("blur",cancel);
+  viewport?.addEventListener("resize",cancel);
+  phoneLayout.addEventListener("change",cancel);
+  document.addEventListener("visibilitychange",cancel);
+  // Closing/reopening the sheet or opening a modal must invalidate a held swipe.
+  const observer = new MutationObserver(cancel);
+  for (const el of [sheet, modal]) observer.observe(el,{attributes:true,attributeFilter:["class"]});
 }
 
 /* Presentation state only: no new order fields, storage keys or network requests. */
@@ -2371,21 +2846,22 @@ function viewCleanCabin() {
 /* ============================================================================
    8. ШТОРКА ПРИЁМА ЗАКАЗА (3 ПОШАГОВЫЕ ВКЛАДКИ БЕЗ ПЕРЕГРУЗА)
    ============================================================================ */
-function renderDrinkSelector(targetPath, currentVal) {
+function renderDrinkSelector(targetPath, choices) {
   const catButtons = DRINK_CATS.map(c =>
     `<button type="button" class="dcat-btn${activeDrinkCat === c.id ? " active" : ""}" data-dcat="${c.id}">${esc(displayName(c.label))}</button>`
   ).join("");
 
   const drinks = getFilteredDrinksByCat(activeDrinkCat);
   const drinkChips = drinks.map(d => {
-    const on = currentVal === d.short;
+    const on = choices.includes(d.short);
     const badge = d.prio ? `<small style="opacity:.8;">★</small>` : (d.restricted ? `<small style="color:var(--danger);">&lt;2ч</small>` : "");
-    return `<button type="button" class="chip${on ? " on" : ""}" data-path="${targetPath}" data-val="${esc(d.short)}" ${d.restricted ? 'disabled aria-label="Недоступно на рейсах до двух часов включительно"' : ""} title="${esc(d.name)} (${d.ml} мл)">
+    return `<button type="button" class="chip${on ? " on" : ""}" data-path="${targetPath}" data-val="${esc(d.short)}" ${d.restricted && !on ? 'disabled aria-label="Недоступно на рейсах до двух часов включительно"' : ""} title="${esc(d.name)} (${d.ml} мл)">
       <span>${esc(d.short)}</span>${badge}
     </button>`;
   }).join("");
 
   return `
+    <p class="subtle drink-multi-hint">Можно выбрать несколько. Нажмите ещё раз, чтобы убрать.</p>
     <div class="drink-cats">${catButtons}</div>
     <div class="chips" style="margin-top:4px;">${drinkChips}</div>
   `;
@@ -2435,7 +2911,7 @@ function renderCourseStep(svcNum) {
   const pairing = selectedMainObj ? getBestPairingChip(selectedMainObj.short, selectedMainObj.full) : null;
 
   const activeDrinkTarget = prefix + (drinkCourseTarget[svcNum] || (sv.m ? "md" : "zd"));
-  const activeDrinkVal = activeDrinkTarget.endsWith("md") ? sv.md : sv.zd;
+  const activeDrinkVal = drinkChoices(sv,activeDrinkTarget.endsWith("md") ? "md" : "zd");
 
   return `
     ${seatSafetyNotice(s)}
@@ -2453,17 +2929,17 @@ function renderCourseStep(svcNum) {
     <div class="field-group">
       <div class="field-label">
         <span>Горячее блюдо</span>
-        ${pairing ? `<button type="button" class="chip gold-chip${activeDrinkVal === pairing.drink ? " on" : ""}" data-path="${activeDrinkTarget}" data-val="${esc(pairing.drink)}">${esc(displayName(pairing.label))}</button>` : ""}
+        ${pairing ? `<button type="button" class="chip gold-chip${activeDrinkVal.includes(pairing.drink) ? " on" : ""}" data-path="${activeDrinkTarget}" data-val="${esc(pairing.drink)}">${esc(displayName(pairing.label))}</button>` : ""}
       </div>
       <div class="dish-list">${mListHtml}</div>
     </div>
     ` : ""}
 
     <!-- Напиток к трапезе (с категориями) -->
-    <details class="order-extra" data-order-extra="drinks"><summary>Напитки к блюдам <span>${esc([sv.zd && ("Зак: " + sv.zd),sv.md && ("Гор: " + sv.md)].filter(Boolean).join(" · ") || "Выбрать")}</span></summary><div class="field-group">
+    <details class="order-extra" data-order-extra="drinks"><summary>Напитки к блюдам <span>${esc([sv.zd && ("Зак: " + drinkText(sv,"zd")),sv.md && ("Гор: " + drinkText(sv,"md"))].filter(Boolean).join(" · ") || "Выбрать")}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Напиток к блюду</span>
-        <span style="color:var(--accent); text-transform:none;">${esc([sv.zd && ("Зак: " + sv.zd), sv.md && ("Гор: " + sv.md)].filter(Boolean).join(" • ") || "не выбран")}</span>
+        <span style="color:var(--accent); text-transform:none;">${esc([sv.zd && ("Зак: " + drinkText(sv,"zd")), sv.md && ("Гор: " + drinkText(sv,"md"))].filter(Boolean).join(" • ") || "не выбран")}</span>
       </div>
       <div class="chips" role="group" aria-label="К какому блюду напиток"><button type="button" class="chip${activeDrinkTarget.endsWith("zd") ? " on" : ""}" data-drink-target="${svcNum}:zd">К закуске</button><button type="button" class="chip${activeDrinkTarget.endsWith("md") ? " on" : ""}" data-drink-target="${svcNum}:md">К горячему</button></div>
       ${renderDrinkSelector(activeDrinkTarget, activeDrinkVal)}
@@ -2471,13 +2947,13 @@ function renderCourseStep(svcNum) {
 
     </details>
     <!-- Чай / Кофе и Десерт -->
-    <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(sv.t || "Выбрать")}</span></summary><div class="field-group">
+    <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(drinkText(sv,"t") || "Выбрать")}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Чай / Кофе</span>
         <span style="color:var(--gold); text-transform:none;">${esc(sp.dessert)}</span>
       </div>
       <div class="chips">
-        ${TEA_LIST.map(t => `<button type="button" class="chip${sv.t === t ? " on" : ""}" data-path="${prefix}t" data-val="${esc(t)}">${esc(displayName(t))}</button>`).join("")}
+        <p class="subtle drink-multi-hint">Можно выбрать несколько.</p>${TEA_LIST.map(t => `<button type="button" class="chip${drinkChoices(sv,"t").includes(t) ? " on" : ""}" data-path="${prefix}t" data-val="${esc(t)}">${esc(displayName(t))}</button>`).join("")}
       </div>
     </div>
     </details>
@@ -2540,9 +3016,9 @@ function renderStepSheet() {
       <div class="field-group">
         <div class="field-label">
           <span>${uiIcon("wine")} Аперитив</span>
-          <span style="color:var(--ink-2); text-transform:none;">${esc(s.ap || "не выбран")}</span>
+          <span style="color:var(--ink-2); text-transform:none;">${esc(drinkText(s,"ap") || "не выбран")}</span>
         </div>
-        <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(s.ap || "Выбрать")}</span></summary>${renderDrinkSelector("ap", s.ap)}</details>
+        <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(drinkText(s,"ap") || "Выбрать")}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>
       </div>
 
       <div class="field-group">
@@ -2720,24 +3196,32 @@ function viewCleanGalley() {
         return `<div class="galley-row"><div class="galley-row-top"><strong>${esc(dish.short)}</strong><span class="${dish.rem < 0 ? "galley-warning" : ""}">${dish.ordered}/${dish.loaded}</span></div>${groupLabels(groups)}${dish.rem < 0 ? `<p class="galley-warning subtle">⚠ Не хватает ${-dish.rem} порц. Уточните загрузку или замените заказ.</p>` : ""}</div>`;
       }).join("")}`;
     }).join("");
-    const drinks = {};
+    const drinks = Object.create(null);
     ids.forEach(id => {
       const seat = S.seats[id]; if (!seat) return;
       const course = seat["s"+n];
       for (const [field,label] of [["zd","к закуске"],["md","к горячему"],["t","чай / кофе"]]) {
-        const name = course[field]; if (!name) continue;
-        if (!drinks[name]) drinks[name] = {now:[],later:[],served:[]};
-        drinks[name][groupFor(seat,course)].push(id + " ("+label+")");
+        for (const name of drinkChoices(course,field)) {
+          if (!drinks[name]) drinks[name] = {now:[],later:[],served:[]};
+          drinks[name][groupFor(seat,course)].push(id + " ("+label+")");
+        }
       }
     });
     return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Напитки, чай и кофе</h3>${Object.entries(drinks).map(([name,groups]) => `<div class="galley-row"><strong style="font-size:13px">${esc(name)}</strong>${groupLabels(groups)}</div>`).join("") || '<p class="subtle">Нет заказов напитков</p>'}</section>`;
   };
-  const aperitifs = {};
-  const cocktailCounts = {};
+  const aperitifs = Object.create(null);
+  const cocktailCounts = Object.create(null);
   ids.forEach(id => {
     const seat = S.seats[id]; if (!seat) return;
-    if (seat.ap) { if (!aperitifs[seat.ap]) aperitifs[seat.ap] = []; aperitifs[seat.ap].push(id); }
-    for (const value of [seat.ap,seat.s1.zd,seat.s1.md,...(S.spec2Code ? [seat.s2.zd,seat.s2.md] : [])]) {
+    const ordered = drinkChoices(seat,"ap");
+    for (const name of ordered) {
+      if (!aperitifs[name]) aperitifs[name] = [];
+      aperitifs[name].push(id);
+    }
+    for (const n of S.spec2Code ? [1,2] : [1]) {
+      for (const field of ["zd","md"]) ordered.push(...drinkChoices(seat["s"+n],field));
+    }
+    for (const value of ordered) {
       const drink = DRINKS_DB.find(d => d.short === value && d.isCocktail);
       if (drink) cocktailCounts[value] = (cocktailCounts[value] || 0)+1;
     }
@@ -2802,7 +3286,7 @@ function buildA5TableHtml() {
     const group = ids.slice(offset, offset + 6);
     blocks.push(`<section class="print-page"><h2>FV ${esc(S.flightNo)} · ${esc(S.date)} · ${esc(fl.route)}</h2><p>Цикл ${S.cycle} · Кресла ${group[0]}–${group[group.length-1]} · ${esc(S.spec1Code)}${S.spec2Code ? " / " + esc(S.spec2Code) : ""}</p>
       <table class="orders-table"><thead><tr><th scope="col">Кресло / гость</th><th scope="col">Аперитив / пожелания</th><th scope="col">Питание 1</th>${S.spec2Code ? '<th scope="col">Питание 2</th>' : ""}</tr></thead><tbody>
-      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc([seat.title,seat.name].filter(Boolean).join(" "))}</th><td>${esc(seat.ap || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
+      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc([seat.title,seat.name].filter(Boolean).join(" "))}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
       </tbody></table><p class="print-foot">Конфиденциально · Данные пассажиров · Страница ${Math.floor(offset/6)+1}/${Math.ceil(ids.length/6)}</p></section>`);
   }
   return blocks.join("");
@@ -2814,10 +3298,10 @@ function buildOrderText() {
   getAllSeatIds().forEach(id => {
     if (!isSeatUsed(id)) return;
     const seat = getSeat(id);
-    out.push(`${id} ${[seat.title,seat.name].filter(Boolean).join(" ")} | Аперитив: ${seat.ap || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}`);
+    out.push(`${id} ${[seat.title,seat.name].filter(Boolean).join(" ")} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}`);
     [1,2].filter(n => n === 1 || S.spec2Code).forEach(n => {
       const sv = seat["s"+n];
-      out.push(`  П${n}: ${sv.z || "—"} (напиток: ${sv.zd || "—"}) | ${sv.m || "—"} (напиток: ${sv.md || "—"}) | ${sv.t || "—"} | ${statusLabel(sv.status)}`);
+      out.push(`  П${n}: ${sv.z || "—"} (напитки: ${drinkText(sv,"zd") || "—"}) | ${sv.m || "—"} (напитки: ${drinkText(sv,"md") || "—"}) | ${drinkText(sv,"t") || "—"} | ${statusLabel(sv.status)}`);
     });
   });
   return out.join("\n");
@@ -2887,6 +3371,32 @@ function boundedText(value, max = 2000) {
   if (typeof value !== "string" || value.length > max) throw new Error("Недопустимое текстовое поле");
   return value;
 }
+// Keep the first choice in the original v6 string field. Only extra choices use an optional array.
+function drinkChoices(record, field) {
+  return record[field] ? [record[field], ...(record[field + "More"] || [])] : [];
+}
+function drinkText(record, field) { return drinkChoices(record, field).map(displayName).join(" · "); }
+function normalizeMoreDrinks(source, target, field, max) {
+  const values = source[field + "More"];
+  if (values == null) return;
+  if (!Array.isArray(values) || values.length > 100) throw new Error("Некорректный список напитков");
+  const unique = [...new Set([target[field], ...values.map(value => boundedText(value,max))].filter(Boolean))];
+  target[field] = unique.shift() || "";
+  if (unique.length) target[field + "More"] = unique;
+}
+function toggleDrink(record, field, value) {
+  const choices = drinkChoices(record, field);
+  const index = choices.indexOf(value);
+  if (index >= 0) choices.splice(index,1);
+  else {
+    if (choices.length >= 101) { toast("Достигнут предел списка напитков"); return false; }
+    choices.push(value);
+  }
+  record[field] = choices.shift() || "";
+  if (choices.length) record[field + "More"] = choices;
+  else delete record[field + "More"];
+  return true;
+}
 function validDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const d = new Date(value + "T12:00:00Z");
@@ -2910,10 +3420,12 @@ function normalizeState(raw, legacy = false) {
     if (!/^\d{1,3}[A-Z]$/.test(id) || !value || typeof value !== "object") throw new Error("Некорректное кресло");
     const seat = blankSeat();
     for (const key of ["title","name","ap","wake","cvu","allergy"]) seat[key] = value[key] == null ? "" : boundedText(value[key], key === "cvu" ? 1000 : key === "allergy" ? 500 : key === "name" ? 120 : 200);
+    normalizeMoreDrinks(value, seat, "ap", 200);
     for (const n of [1,2]) {
       const sv = value["s"+n];
       if (!sv || typeof sv !== "object") throw new Error("Нет данных обслуживания");
       for (const key of ["z","zd","m","md","t"]) seat["s"+n][key] = boundedText(sv[key] == null ? "" : sv[key], 300);
+      for (const key of ["zd","md","t"]) normalizeMoreDrinks(sv, seat["s"+n], key, 300);
       const status = sv.status || (legacy && value.served ? "served" : "pending");
       if (!["pending","later","served"].includes(status)) throw new Error("Неизвестный статус");
       seat["s"+n].status = status;
@@ -2969,7 +3481,7 @@ function renderServiceStatus(n, course) {
   return `<div class="service-status"><p class="field-label">Статус питания ${n}</p><div class="chips" role="group" aria-label="Статус питания ${n}">${[["pending","Принят"],["later","◷ Позже"],["served","✓ Подано"]].map(([key,label]) => `<button type="button" class="chip${course.status === key ? " on" : ""}" data-course-status="${n}:${key}" aria-pressed="${course.status === key}">${label}</button>`).join("")}</div></div>`;
 }
 function coursePrint(course) {
-  return `<strong>${esc(statusLabel(course.status))}</strong><br>Закуска: ${esc(course.z || "—")}<br>Напиток: ${esc(course.zd || "—")}<br>Горячее: ${esc(course.m || "—")}<br>Напиток: ${esc(course.md || "—")}<br>Чай / кофе: ${esc(course.t || "—")}`;
+  return `<strong>${esc(statusLabel(course.status))}</strong><br>Закуска: ${esc(course.z || "—")}<br>Напитки: ${esc(drinkText(course,"zd") || "—")}<br>Горячее: ${esc(course.m || "—")}<br>Напитки: ${esc(drinkText(course,"md") || "—")}<br>Чай / кофе: ${esc(drinkText(course,"t") || "—")}`;
 }
 function clearCourses() {
   for (const seat of Object.values(S.seats)) {
@@ -3044,6 +3556,7 @@ async function importOrders(file) {
   finally { document.getElementById("importFile").value = ""; }
 }
 function closeModal() {
+  clearEntryDialog();
   restorePhoneTools();
   document.getElementById("modalBack").classList.remove("open");
 }
@@ -3105,9 +3618,13 @@ function changeOrder(path, value) {
       if (stat.rem <= 0 && !confirm(`⚠ «${value}»: доступно ${stat.rem}. Добавить сверх загрузки? Делайте это только после проверки фактического наличия. Остаток станет отрицательным.`)) return;
     }
     if (sv.status === "served" && !confirm("Это питание уже подано. Изменить заказ и вернуть статус «Принят»?")) return;
-    sv[field] = selecting ? value : "";
+    if (["zd","md","t"].includes(field)) {
+      if (!toggleDrink(sv,field,value)) return;
+    } else sv[field] = selecting ? value : "";
     if (sv.status === "served") sv.status = "pending";
-  } else if (["title","ap","wake"].includes(path)) {
+  } else if (path === "ap") {
+    if (!toggleDrink(seat,"ap",value)) return;
+  } else if (["title","wake"].includes(path)) {
     seat[path] = seat[path] === value ? "" : value;
   } else return;
   saveState(); renderAll();
@@ -3117,6 +3634,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initPhoneUI();
   initOfflineApp();
   initQuickOrder();
+  initServiceFlow();
+  initSheetGestures();
   renderAll();
   if (!storageConflict) saveState();
   const byId = id => document.getElementById(id);
@@ -3216,6 +3735,11 @@ document.addEventListener("DOMContentLoaded", () => {
       clean.querySelectorAll("input").forEach(el => el.removeAttribute("value"));
       clean.querySelectorAll(".open").forEach(el => el.classList.remove("open"));
       clean.querySelectorAll("[inert]").forEach(el => el.removeAttribute("inert"));
+      const cleanSheet = clean.querySelector("#orderSheet");
+      delete cleanSheet.dataset.sheetDrag;
+      cleanSheet.style.removeProperty("--sheet-drag-x");
+      cleanSheet.style.removeProperty("--sheet-drag-y");
+      clean.querySelector("#sheetDragHint").textContent = "";
       clean.querySelector("#sheetSeatTitle").textContent = "Кресло";
       clean.querySelector("#saveStatus").textContent = "Проверка сохранения…";
       clean.querySelector("body").style.overflow = "";
@@ -3233,7 +3757,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   byId("btnPrevSeat").addEventListener("click",() => stepSeat(-1));
-  byId("btnNextSeat").addEventListener("click",() => stepSeat(1));
+  byId("btnNextSeat").addEventListener("click",e => requestSeatForward(e.currentTarget));
   byId("btnCloseSheet").addEventListener("click",closeMobileSheet);
   byId("sheetBackdrop").addEventListener("click",closeMobileSheet);
   byId("stepTabs").addEventListener("click",e => {
@@ -3280,16 +3804,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.closest("#btnClearSeat")) {
       const before = clone(S); S.seats[activeSeatId] = blankSeat(); saveState(); renderAll(); offerUndo("Заказ кресла " + activeSeatId + " очищен",before); return;
     }
-    if (e.target.closest("#btnNextSeatStep")) {
-      const ids = getAllSeatIds();
-      if (activeSeatId === ids[ids.length-1]) {
-        closeMobileSheet();
-        byId("mainView").querySelector(`[data-seat="${activeSeatId}"]`)?.focus({preventScroll:true});
-      } else {
-        stepSeat(1);
-        byId("btnNextSeatStep").focus({preventScroll:true});
-      }
-    }
+    const forward = e.target.closest("#btnNextSeatStep");
+    if (forward) requestSeatForward(forward,true);
   });
   byId("sheetContent").addEventListener("input",e => {
     const key = ({ inGuestName:"name", inCvu:"cvu", inAllergy:"allergy" })[e.target.id];
@@ -3338,10 +3854,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (open === modalWasOpen) return;
     modalWasOpen = open;
     if (open) {
-      modalReturnFocus = document.activeElement;
+      modalReturnFocus = entryDialogOpener || document.activeElement;
       document.querySelector(".app").inert = true;
       document.body.style.overflow = "hidden";
-      modal.querySelector("button, input, select, textarea")?.focus();
+      (modal.querySelector("[data-modal-focus]") || modal.querySelector("button, input, select, textarea"))?.focus();
     } else {
       document.querySelector(".app").inert = false;
       document.body.style.overflow = byId("orderSheet").classList.contains("open") ? "hidden" : "";
