@@ -16,13 +16,12 @@ try {
 } catch (e) {}
 </script>
 <style>
-/* Палитра сайта «России»: #D0112B, белый, нейтральный серый; #006DA4 — вторичный синий.
-   Светлый фирменный красный взят из CSS и SVG сайта, тёмная тема адаптирована для приложения. */
+/* Веб-палитра брендбука 2.1; семантические цвета оставлены для статусов. */
 :root, :root[data-theme="light"] {
   color-scheme:light;
-  --brand:#d0112b; --brand-mark:#d0112b;
-  --bg:#f5f5f5; --surface:#fff; --surface-2:#f7f7f7; --surface-3:#ededed;
-  --ink:#333333; --ink-2:#505050; --muted:#686868; --line:#e7e7e7; --line-strong:#cecece;
+  --brand:#d0112b; --brand-blue:#1b3e6f; --secondary:var(--brand-blue);
+  --bg:#f5f5f5; --surface:#fff; --surface-2:#f7f7f7; --surface-3:#eceded;
+  --ink:#333333; --ink-2:#55565a; --muted:#686868; --line:#e7e7e7; --line-strong:#cbc8c8;
   --accent:#d0112b; --accent-hover:#ad0d23; --accent-ink:#fff; --accent-tint:#fff0f2; --accent-line:#efbdc5;
   --status:#006da4; --status-bg:#edf6fb; --status-line:#acd0e4; --success:#28734d;
   --warning:#805000; --warning-bg:#fff6df; --warning-line:#d6ac53;
@@ -32,12 +31,12 @@ try {
   --fuselage:#fcfcfc; --fuselage-wall:#dedede; --aisle-carpet:transparent;
   --seat-bg:#fff; --seat-headrest:#dedede; --pip-off:#bfbfbf;
   --shadow:0 12px 40px #22222214; --shadow-sm:0 2px 6px #22222205; --focus:#d0112b;
-  --font:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Arial,sans-serif;
-  --rail:#d0112b; --rail-ink:#fff; --rail-active:#fff; --map:#eeeeef;
+  --font:Arial,sans-serif;
+  --rail:var(--brand); --rail-ink:#fff; --rail-active:#fff; --map:#eceded;
 }
 :root[data-theme="dark"] {
   color-scheme:dark;
-  --brand:#d0112b; --brand-mark:#ff899a;
+  --secondary:#adccf5;
   --bg:#19191c; --surface:#232326; --surface-2:#2c2c30; --surface-3:#36363a;
   --ink:#f4f4f4; --ink-2:#d0d0d2; --muted:#b1b1b7; --line:#3b3b41; --line-strong:#56565e;
   --accent:#ff899a; --accent-hover:#ffadba; --accent-ink:#340610; --accent-tint:#47262f; --accent-line:#915061;
@@ -48,7 +47,7 @@ try {
   --danger:#ffb0a5; --danger-bg:#492b2a; --danger-line:#9c5f56;
   --fuselage:#262629; --fuselage-wall:#49494e; --seat-bg:#303034; --seat-headrest:#53535a;
   --shadow:0 14px 40px #0002; --shadow-sm:0 2px 6px #0001; --focus:#ff899a;
-  --rail:#a90e24; --rail-ink:#fff; --rail-active:#fff; --map:#202023;
+  --rail:var(--brand); --rail-ink:#fff; --rail-active:#fff; --map:#202023;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html { -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased; }
@@ -63,8 +62,7 @@ button,input,textarea,select { transition:background-color .16s,border-color .16
 .ic { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.65; stroke-linecap:round; stroke-linejoin:round; flex:none; vertical-align:middle; }
 .app { min-height:100dvh; padding-left:92px; }
 .brand-mark { position:fixed; z-index:45; top:24px; left:26px; width:40px; height:40px; color:white; display:grid; place-items:center; }
-.brand-mark .airline-symbol { width:37px; height:32px; fill:currentColor; }
-.brand-mark .ic { width:33px; height:33px; stroke-width:1.3; transform:rotate(-14deg); }
+.brand-mark .ic { width:33px; height:33px; stroke-width:1.5; }
 .bottom-nav { position:fixed; z-index:40; inset:0 auto 0 0; width:92px; display:flex; flex-direction:column; align-items:center; gap:12px; padding:112px 12px 24px; background:var(--rail); }
 .nav-tab { color:var(--rail-ink); border-radius:14px; width:68px; min-height:70px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; position:relative; }
 .nav-tab .ic { width:22px; height:22px; }
@@ -73,12 +71,12 @@ button,input,textarea,select { transition:background-color .16s,border-color .16
 .nav-tab[aria-current="page"] { color:var(--rail-active); background:#ffffff12; }
 .nav-tab[aria-current="page"]::before { content:""; position:absolute; width:3px; height:23px; left:-12px; top:24px; background:#ffffff; border-radius:0 3px 3px 0; }
 .rail-foot { position:fixed; bottom:26px; left:0; width:92px; text-align:center; color:#ffffff; z-index:41; font-size:10px; letter-spacing:.16em; pointer-events:none; }
-.topbar { background:var(--surface); border-bottom:1px solid var(--line); padding:19px 32px; }
-.topbar-inner { max-width:1370px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.wordmark { display:flex; flex-direction:column; min-width:144px; line-height:1.2; color:var(--brand-mark); }
-.airline-logo { display:block; width:144px; height:25px; fill:currentColor; }
-.wordmark small { font-size:9px; letter-spacing:.1em; color:var(--muted); margin-top:6px; }
-.flight-identity { display:flex; align-items:center; gap:26px; min-width:0; }
+.topbar { background:var(--surface); border-bottom:1px solid var(--line); padding:12px 24px; }
+.topbar-inner { max-width:1370px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.wordmark { display:flex; flex-direction:column; flex:none; align-items:flex-start; padding:7px 12px; border-radius:8px; line-height:1.15; color:#fff; background:var(--brand); }
+.wordmark strong { font-size:21px; }
+.wordmark small { font-size:10px; margin-top:3px; }
+.flight-identity { display:flex; align-items:center; gap:16px; min-width:0; }
 .flight-block { min-width:0; }
 .flight-picker { display:flex; align-items:center; gap:9px; }
 .flight-picker > span { color:var(--accent); display:flex; align-items:center; }
@@ -305,9 +303,8 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .seat-state { font-size:10px; }
 }
 @media(max-width:1240px) and (min-width:1020px) {
-  .wordmark { display:none; }
   .cycle-seg { display:none; }
-  .topbar { padding:18px 24px; }
+  .topbar { padding:12px 24px; }
   .workspace { padding:26px 24px; gap:20px; }
   .workspace.with-side { grid-template-columns:minmax(0,1fr) 330px; }
   .aircraft-wrap { padding:17px 12px; }
@@ -333,8 +330,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .cycle-seg { display:none; }
   .topbar { padding:16px 24px; }
   .topbar-inner { flex-wrap:wrap; gap:12px; }
-  .flight-identity { gap:20px; }
-  .wordmark { min-width:90px; }
+  .flight-identity { gap:16px; }
   .top-actions { margin-left:auto; }
   .date-control { padding-right:7px; }
   .order-sheet { position:fixed; z-index:60; left:0; right:0; bottom:0; width:100%; max-width:620px; max-height:92dvh; margin:auto; border-radius:23px 23px 0 0; padding-bottom:env(safe-area-inset-bottom); transform:translateY(105%); visibility:hidden; transition:transform .24s; box-shadow:0 -15px 60px #1024361a; }
@@ -351,10 +347,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .topbar { padding:13px 16px 12px; padding-top:max(13px,env(safe-area-inset-top)); }
   .topbar-inner { gap:11px; }
   .flight-identity { width:100%; justify-content:space-between; gap:12px; }
-  .wordmark { min-width:92px; }
-  .airline-logo { width:98px; height:19px; }
-  .wordmark small { font-size:8px; letter-spacing:.02em; }
-  .flight-block { max-width:calc(100% - 108px); }
+  .flight-block { min-width:0; }
   .flight-picker { justify-content:flex-end; gap:5px; }
   .flight-picker > span { display:none; }
   .flight-sel { max-width:100%; font-size:11px; height:26px; }
@@ -441,7 +434,6 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .workspace { padding-left:10px; padding-right:10px; }
   .flight-sel { font-size:11px; }
   .flight-pill { font-size:8px; }
-  .airline-logo { width:90px; height:18px; }
   .icon-pill-btn { padding:6px 7px; font-size:10px; }
   .save-strip,.local-notice { padding-left:12px; padding-right:12px; }
   .stock-meta { font-size:8px; }
@@ -617,14 +609,15 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .topbar { padding:calc(7px + env(safe-area-inset-top)) 12px 7px; }
   .topbar-inner { flex-wrap:nowrap; gap:8px; }
   .flight-identity { width:auto; flex:1; justify-content:flex-start; min-width:0; gap:10px; }
-  .wordmark { display:flex; width:70px; min-width:70px; }
-  .airline-logo { width:70px; height:19px; }
+  .wordmark { flex:none; padding:6px 8px; }
+  .wordmark strong { font-size:17px; }
   .wordmark small,.flight-picker > span,#flightSummaryPill { display:none; }
   .flight-block { flex:1; min-width:0; max-width:none; }
   .flight-picker { display:block; position:relative; }
   .flight-picker::after { content:""; position:absolute; right:4px; top:17px; width:6px; height:6px; border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted); transform:rotate(45deg); pointer-events:none; }
   .flight-sel { display:block; appearance:none; -webkit-appearance:none; background:transparent; border:0; border-radius:0; font-size:16px; font-weight:650; min-height:44px; height:44px; max-width:100%; width:100%; padding-right:20px; text-overflow:ellipsis; }
   .phone-flight-meta { display:block; font-size:11px; color:var(--muted); line-height:1.5; white-space:nowrap; }
+  .phone-flight-route { display:none; }
   .phone-menu-button { align-items:center; justify-content:center; width:44px; min-height:44px; flex:none; border:1px solid var(--line); border-radius:12px; color:var(--ink); background:var(--surface); }
   .topbar .top-actions,.save-strip .save-actions,.app > .local-notice { display:none; }
   .save-strip { margin:0; padding:3px 14px 0; font-size:10px; min-height:20px; gap:4px; }
@@ -730,10 +723,11 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 }
 @media(max-width:359px) {
   .flight-identity { gap:7px; }
-  .wordmark { width:60px; min-width:60px; }
-  .airline-logo { width:60px; }
+  .wordmark { padding-inline:7px; }
   .flight-sel { font-size:16px; }
   .phone-flight-meta { font-size:10px; }
+  .phone-flight-route { display:block; }
+  .phone-flight-count { display:none; }
   .workspace { padding-left:10px; padding-right:10px; }
   .cabin-tools .chip { padding-left:7px; padding-right:7px; }
 }
@@ -799,7 +793,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 /* Compact controls and scrollable dialogs for the order hand-off. */
 #btnFindFlight { flex:none; display:inline-flex; align-items:center; justify-content:center; width:44px; min-height:44px; padding:0; }
 #btnFindFlight .ic { width:20px; height:20px; }
-#btnGuestEnglish { font-size:12px; font-weight:750; letter-spacing:.03em; }
+#btnGuestMenu { font-size:11px; font-weight:700; padding:0 3px; border-color:var(--status-line); background:var(--status-bg); color:var(--secondary); }
 #modalBox[data-entry-dialog] { overflow-wrap:anywhere; }
 #flightNumberForm { display:grid; gap:8px; margin-top:12px; }
 #flightNumberMatches:empty { display:none; }
@@ -808,13 +802,9 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 .entry-readback-tools button,.entry-dialog-actions button { min-height:44px; }
 .entry-dialog-actions { position:sticky; bottom:0; background:var(--surface); margin-top:12px; padding:8px 0 0; border-top:1px solid var(--line); flex-wrap:wrap; }
 .entry-dialog-actions .primary { flex:1; }
-.entry-readback-section,.entry-english-meal { padding:10px 12px; margin:8px 0; border:1px solid var(--line); border-radius:12px; }
-.entry-english-meal .entry-readback-section { border:none; padding:3px 0; }
-.entry-english-meal .order-extra { margin:8px 0; }
-.entry-readback-section h3,.entry-english-meal h3 { font-size:15px; }
-.entry-readback-section dl,.entry-readback-section ul,.entry-english-meal details ul { margin:6px 0; }
-.entry-readback-section ul,.entry-english-meal details ul { padding-inline-start:20px; }
-.entry-readback-section li,.entry-english-meal details li { margin:4px 0; }
+.entry-readback-section { padding:10px 12px; margin:8px 0; border:1px solid var(--line); border-radius:12px; }
+.entry-readback-section h3 { font-size:15px; }
+.entry-readback-section dl { margin:6px 0; }
 .entry-readback-section dl > div { display:grid; grid-template-columns:minmax(80px,1fr) minmax(0,2fr); gap:8px; padding:4px 0; }
 .entry-readback-section dt { color:var(--muted); }
 .entry-readback-section dd { margin:0; }
@@ -824,7 +814,60 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 #orderSheet [data-path$=".t"].on::before { content:"✓ "; }
 @media(max-width:767px), (max-width:1019px) and (max-height:500px) {
   #btnFindFlight { border:1px solid var(--line); border-radius:12px; background:var(--surface); }
-  #btnGuestEnglish { padding:0 5px; }
+}
+
+/* Guest presentation is opaque, with its own scroll and always-visible exit. */
+body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) .app { opacity:0; }
+body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility:hidden; }
+#modalBack:has(> [data-entry-dialog="guest-menu"]) {
+  padding:0; background:var(--surface); backdrop-filter:none; place-items:stretch; z-index:100;
+}
+#modalBox[data-entry-dialog="guest-menu"] {
+  max-width:none; max-height:none; min-height:0; height:100%;
+  border:0; border-radius:0; padding:0; box-shadow:none; overflow:hidden;
+  display:grid; grid-template-rows:auto auto minmax(0,1fr); text-align:left;
+  --menu-gutter:clamp(14px,4vw,36px);
+}
+#modalBox[data-entry-dialog="guest-menu"] .modal-heading {
+  margin:0; padding:calc(8px + env(safe-area-inset-top)) max(var(--menu-gutter),env(safe-area-inset-right)) 8px max(var(--menu-gutter),env(safe-area-inset-left));
+  background:var(--brand-blue); color:white;
+}
+#modalBox[data-entry-dialog="guest-menu"] h2 { font-size:clamp(23px,4vw,31px); letter-spacing:normal; }
+#modalBox[data-entry-dialog="guest-menu"] [data-close-modal] {
+  min-width:44px; min-height:44px; padding:0; color:white; border-color:#ffffff82; background:transparent;
+}
+#modalBox[data-entry-dialog="guest-menu"] [data-close-modal]:hover { background:#ffffff1a; }
+#modalBox[data-entry-dialog="guest-menu"] [data-close-modal]:focus-visible { outline-color:white; }
+.guest-menu-languages {
+  display:flex; gap:8px; padding:6px max(var(--menu-gutter),env(safe-area-inset-right)) 6px max(var(--menu-gutter),env(safe-area-inset-left));
+  border-bottom:1px solid var(--line); background:var(--surface);
+}
+.guest-menu-languages button { min-width:56px; min-height:44px; font-weight:700; border:1px solid var(--line-strong); border-radius:8px; color:var(--secondary); transition:none; }
+.guest-menu-languages [aria-pressed="true"] { background:var(--brand); color:white; border-color:var(--brand); }
+#guestMenuScroll { overflow:auto; overscroll-behavior:contain; background:var(--bg); }
+#guestMenuScroll:focus-visible { outline:3px solid var(--focus); outline-offset:-3px; }
+#guestMenuContent {
+  max-width:1000px; margin-inline:auto;
+  padding:16px max(var(--menu-gutter),env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(var(--menu-gutter),env(safe-area-inset-left));
+}
+.guest-menu-intro { margin-bottom:14px; padding:10px 12px; border-inline-start:3px solid var(--brand); color:var(--ink-2); background:var(--surface); font-size:14px; }
+.guest-menu-cards { display:grid; gap:12px; }
+.guest-menu-card { min-width:0; border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--surface); }
+.guest-menu-card h3 { font-size:21px; line-height:1.2; color:var(--secondary); margin-bottom:6px; }
+.guest-menu-group { padding:9px 0; border-bottom:1px solid var(--line); }
+.guest-menu-group:last-child { border:0; padding-bottom:0; }
+.guest-menu-group h4 { font-size:14px; color:var(--secondary); }
+.guest-menu-card ul { margin:3px 0 0; padding-inline-start:21px; }
+.guest-menu-card li { font-size:17px; line-height:1.4; margin:4px 0; }
+.guest-menu-drinks details { border-bottom:1px solid var(--line); }
+.guest-menu-drinks summary { display:list-item; min-height:44px; padding:11px 0; cursor:pointer; color:var(--secondary); font-size:15px; font-weight:700; }
+.guest-menu-drinks details ul { padding-bottom:8px; }
+@media(min-width:720px) and (min-height:501px) {
+  .guest-menu-cards { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+  .guest-menu-drinks:last-child:nth-child(3) { grid-column:1 / -1; }
+}
+@media print {
+  body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) > :not(script) { display:none!important; }
 }
 
 #sheetDragHandle { display:none; }
@@ -894,38 +937,13 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 <body>
 
 <div class="app">
-  <div class="brand-mark" aria-hidden="true"><svg class="airline-symbol" viewBox="0 0 68 53" fill="currentColor" aria-hidden="true"><path d="M63.32,16.39c0-6.69-8.33-12.12-22.52-12.12h-2.04l4.18-3.99l-6.21,0.03L26.49,4.27h-16.3
-			C4.46,4.27,1.28,5.67,0,8.41h33.51c9.24,0,15.45,1.4,15.45,7.77c0,6.87-7.47,8.2-15.45,8.2H18.46l13.32,14.33
-			c11.29,11.89,21.88,14.01,35.03,14.01L43.08,28.45C55.67,28,63.32,22.67,63.32,16.39L63.32,16.39z"/></svg></div>
+  <div class="brand-mark" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m22 2-7.5 20-3.8-8.7L2 9.5 22 2Z"/><path d="m22 2-11.3 11.3"/></svg></div>
   <div class="rail-foot" aria-hidden="true">БОРТ<br>БИЗНЕС</div>
   <!-- 1. ВЕРХНЯЯ ПАНЕЛЬ В 1 СТРОКУ -->
   <header class="topbar">
     <div class="topbar-inner">
       <div class="flight-identity">
-        <div class="wordmark"><svg class="airline-logo" role="img" aria-label="Авиакомпания Россия" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 334 53" fill="currentColor" focusable="false">
-<path d="M63.32,16.39c0-6.69-8.33-12.12-22.52-12.12h-2.04l4.18-3.99l-6.21,0.03L26.49,4.27h-16.3
-			C4.46,4.27,1.28,5.67,0,8.41h33.51c9.24,0,15.45,1.4,15.45,7.77c0,6.87-7.47,8.2-15.45,8.2H18.46l13.32,14.33
-			c11.29,11.89,21.88,14.01,35.03,14.01L43.08,28.45C55.67,28,63.32,22.67,63.32,16.39L63.32,16.39z"/>
-<path d="M105.3,31.66c-2.52,0-4.56-0.3-6.12-0.67V17.18c1.61-0.19,3.7-0.36,6.12-0.36
-			c5.83,0,9.23,2.35,9.23,7.25C114.53,29.07,110.89,31.66,105.3,31.66L105.3,31.66z M106.18,13.84c-4.91,0-9.67,0.59-14.77,0.78
-			v27.75h7.77v-8.09c2.22,0.2,4.67,0.36,7,0.36c10.44,0,17.05-3.07,17.05-10.56C123.22,16.58,116.62,13.84,106.18,13.84
-			L106.18,13.84z"/>
-<path d="M149.84,40.11c-6.17,0-10.44-4.51-10.44-11.67c0-7.11,4.28-11.77,10.44-11.77
-			c6.21,0,10.44,4.66,10.44,11.77C160.28,35.55,156.05,40.11,149.84,40.11L149.84,40.11z M149.84,13.7c-11.51,0-19.14,6-19.14,14.75
-			c0,8.74,7.63,14.64,19.14,14.64c11.51,0,19.13-5.91,19.13-14.64C168.97,19.7,161.35,13.7,149.84,13.7L149.84,13.7z"/>
-<polygon points="282.28,14.59 265.04,36.56 265.04,14.59 257.26,14.59 257.26,42.5 260.37,42.5 
-			265.04,42.5 282.28,20.48 282.28,42.5 290.05,42.5 290.05,14.59 286.89,14.59 		"/>
-<path d="M197.48,16.78c6.02,0,9.61,3.22,9.61,3.22l1.61-4.13c0,0-4.52-2.17-12.19-2.17
-			c-11.07,0-18.84,6-18.84,14.75c0,8.74,7.29,14.65,19.33,14.65c7.38,0,11.66-2.3,11.66-2.3v-4.44c0,0-3.59,3.41-10.83,3.41
-			c-7.38,0-11.46-4.25-11.46-11.31C186.36,21.43,190.53,16.78,197.48,16.78L197.48,16.78z"/>
-<path d="M326.23,29.79h-7.24c-5.05,0-8.11-2.4-8.11-6.72c0-4.23,3.06-6.24,8.11-6.24
-			c2.74,0,5.3,0.23,7.24,0.48V29.79z M318.12,13.84c-9.42,0-15.93,2.35-15.93,9.27c0,4.57,2.64,7.26,7.28,8.57l-10.35,11.22h0.97
-			c7.09,0,10.59-1.49,15.15-6.97l2.71-3.28c0.05,0,0.1,0,0.16,0h8.11v9.7H334v-9.7V14.6C327.44,14.41,323.03,13.84,318.12,13.84
-			L318.12,13.84z"/>
-<path d="M235.31,16.78c6.02,0,9.61,3.22,9.61,3.22l1.61-4.13c0,0-4.52-2.17-12.19-2.17
-			c-11.07,0-18.85,6-18.85,14.75c0,8.74,7.29,14.65,19.33,14.65c7.38,0,11.66-2.3,11.66-2.3v-4.44c0,0-3.59,3.41-10.83,3.41
-			c-7.38,0-11.46-4.25-11.46-11.31C224.19,21.43,228.37,16.78,235.31,16.78L235.31,16.78z"/>
-</svg><small>БОРТ · БИЗНЕС-КЛАСС</small></div>
+        <div class="wordmark"><strong>Борт</strong><small>Бизнес-класс</small></div>
         <div class="flight-block"><div class="flight-picker">
           <span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m22 2-7.5 20-3.8-8.7L2 9.5 22 2Z"/><path d="m22 2-11.3 11.3"/></svg></span>
           <select class="flight-sel" id="selFlight" aria-label="Выбор рейса"></select>
@@ -982,7 +1000,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
         <button type="button" class="icon-pill-btn" id="btnPrevSeat" aria-label="Предыдущее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6"/></svg></button>
         <div class="sheet-seat-title" id="sheetSeatTitle">Кресло 1A</div>
         <div style="display:flex; align-items:center; gap:6px;">
-          <button type="button" class="icon-pill-btn" id="btnGuestEnglish" aria-label="Меню гостя на английском" title="Menu in English" aria-haspopup="dialog"><span lang="en">EN</span></button>
+          <button type="button" class="icon-pill-btn" id="btnGuestMenu" aria-label="Меню гостя на русском и английском" title="Меню гостя · RU / EN" aria-haspopup="dialog">Меню</button>
           <button type="button" class="icon-pill-btn" id="btnToggleServed" hidden>Подано</button>
           <button type="button" class="icon-pill-btn" id="btnNextSeat" aria-label="Следующее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 6 6 6-6 6"/></svg></button>
           <button type="button" class="icon-pill-btn only-mobile" id="btnCloseSheet" aria-label="Закрыть заказ"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
@@ -1412,27 +1430,42 @@ function refreshReadbackWarning() {
   warning.textContent = storageProblem;
 }
 
-function englishMenuList(title, values) {
-  return values.length ? `<section class="entry-readback-section"><h4>${title}</h4><ul>${values.map(value => `<li>${esc(value)}</li>`).join("")}</ul></section>` : "";
+function guestMenuList(title, values) {
+  return values.length ? `<section class="guest-menu-group"><h4>${esc(title)}</h4><ul>${values.map(value => `<li>${esc(value)}</li>`).join("")}</ul></section>` : "";
 }
-function openGuestEnglishMenu(opener) {
-  const en = value => displayName(guestEnglishName(value));
+function openGuestMenu(opener) {
+  if (document.getElementById("modalBack").classList.contains("open")) return;
+  openEntryDialog("guest-menu",opener,"Меню",`<div class="guest-menu-languages" role="group" aria-label="Язык меню"><button type="button" data-menu-lang="ru" lang="ru" aria-label="Русский" aria-pressed="true">RU</button><button type="button" data-menu-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button></div><div id="guestMenuScroll" tabindex="0" role="region" aria-labelledby="entryDialogTitle"><div id="guestMenuContent"></div></div>`);
+  renderGuestMenu("ru");
+}
+function renderGuestMenu(lang) {
+  const box = document.getElementById("modalBox");
+  const content = document.getElementById("guestMenuContent");
+  const english = lang === "en";
+  const label = (ru,en) => english ? en : ru;
+  const name = value => displayName(english ? guestEnglishName(value) : value);
+  box.lang = lang;
+  box.querySelector("#entryDialogTitle").textContent = label("Меню", "Menu");
+  box.querySelector("[data-close-modal]").setAttribute("aria-label",label("Закрыть меню", "Close menu"));
+  box.querySelector(".guest-menu-languages").setAttribute("aria-label",label("Язык меню", "Menu language"));
+  box.querySelectorAll("[data-menu-lang]").forEach(button => button.setAttribute("aria-pressed",String(button.dataset.menuLang === lang)));
+  const expanded = new Set([...content.querySelectorAll("details[open]")].map(group => group.dataset.menuCategory));
   const menus = (S.spec2Code ? [1,2] : [1]).map(n => {
     const spec = SPECS[S["spec"+n+"Code"]];
     if (!spec) return "";
-    return `<section class="entry-english-meal"><h3>Meal service ${n}</h3>${englishMenuList("Starters",(spec.starters || []).map(dish => en(dish.short)))}${englishMenuList("Main courses",(spec.mains || []).map(dish => en(dish.short)))}${englishMenuList("Soup",spec.soup ? [en(spec.soup)] : [])}${englishMenuList("Dessert",spec.dessert ? [en(spec.dessert)] : [])}${englishMenuList("Bread",spec.bread ? [en(spec.bread)] : [])}</section>`;
+    return `<section class="guest-menu-card"><h3>${label("Питание", "Meal service")} ${n}</h3>${guestMenuList(label("Закуски", "Starters"),(spec.starters || []).map(dish => name(dish.short)))}${guestMenuList(label("Горячие блюда", "Main courses"),(spec.mains || []).map(dish => name(dish.short)))}${guestMenuList(label("Суп", "Soup"),spec.soup ? [name(spec.soup)] : [])}${guestMenuList(label("Десерт", "Dessert"),spec.dessert ? [name(spec.dessert)] : [])}${guestMenuList(label("Хлеб", "Bread"),spec.bread ? [name(spec.bread)] : [])}</section>`;
   }).join("");
   const drinks = DRINK_CATS.map(category => {
-    const options = getFilteredDrinksByCat(category.id).filter(drink => !drink.restricted).map(drink => `${en(drink.short)} · ${drink.ml} ml`);
-    return options.length ? `<details class="order-extra"><summary>${esc(en(category.label))}</summary><ul>${options.map(option => `<li>${esc(option)}</li>`).join("")}</ul></details>` : "";
+    const options = getFilteredDrinksByCat(category.id).filter(drink => !drink.restricted).map(drink => `${name(drink.short)} · ${drink.ml} ${label("мл", "ml")}`);
+    return options.length ? `<details data-menu-category="${esc(category.id)}"${expanded.has(category.id) ? " open" : ""}><summary>${esc(name(category.label))}</summary><ul>${options.map(option => `<li>${esc(option)}</li>`).join("")}</ul></details>` : "";
   }).join("");
-  openEntryDialog("english",opener,"Menu in English",`<p class="safety-note">Please tell your cabin crew about any food allergies or dietary requirements. Ask the crew to confirm availability and ingredients.</p>${menus}<section class="entry-english-meal"><h3>Drinks</h3>${drinks}${englishMenuList("Tea and coffee",TEA_LIST.map(en))}</section>`,"en");
+  content.innerHTML = `<p class="guest-menu-intro">${esc(label("Сообщите бортпроводнику об аллергиях и особых требованиях к питанию. Уточняйте состав и наличие блюд и напитков.", "Please tell your cabin crew about any food allergies or dietary requirements. Ask the crew to confirm ingredients and availability."))}</p><div class="guest-menu-cards">${menus}<section class="guest-menu-card guest-menu-drinks"><h3>${label("Напитки", "Drinks")}</h3>${drinks}${guestMenuList(label("Чай и кофе", "Tea and coffee"),TEA_LIST.map(name))}</section></div>`;
 }
 
 function initServiceFlow() {
   const modal = document.getElementById("modalBack");
   document.getElementById("btnFindFlight").addEventListener("click",e => openFlightNumberSearch(e.currentTarget));
-  document.getElementById("btnGuestEnglish").addEventListener("click",e => openGuestEnglishMenu(e.currentTarget));
+  document.getElementById("btnGuestMenu").addEventListener("click",e => openGuestMenu(e.currentTarget));
   modal.addEventListener("input",e => { if (e.target.id === "flightNumberQuery") renderFlightSearchResults(); });
   modal.addEventListener("submit",e => {
     if (e.target.id !== "flightNumberForm") return;
@@ -1445,6 +1478,11 @@ function initServiceFlow() {
   modal.addEventListener("click",e => {
     const match = e.target.closest("[data-flight-match]");
     if (match) { chooseFlightMatch(match.dataset.flightMatch); return; }
+    const menuLanguage = e.target.closest("[data-menu-lang]");
+    if (menuLanguage) {
+      if (menuLanguage.getAttribute("aria-pressed") !== "true") renderGuestMenu(menuLanguage.dataset.menuLang);
+      return;
+    }
     const language = e.target.closest("#btnReadbackEnglish");
     if (language) {
       const english = language.getAttribute("aria-pressed") !== "true";
@@ -1634,16 +1672,16 @@ function syncPhoneFlight() {
   const el = document.getElementById("phoneFlightMeta");
   if (!el) return;
   const [year,month,day] = S.date.split("-");
-  el.textContent = `${day}.${month}.${year} · ${getAllSeatIds().length} мест · Ц${S.cycle}`;
+  const compactRoute = flight => flight.route.replace(/\s*\([^)]*\)/g, "").trim();
   const select = document.getElementById("selFlight");
+  const current = FLIGHTS_OZP.find(f => String(f.no) === select.value);
+  el.innerHTML = `<span class="phone-flight-route">${esc(current ? compactRoute(current) : "")}</span><span>${esc(`${day}.${month}.${year}`)}</span><span class="phone-flight-count">· ${getAllSeatIds().length} мест · Ц${S.cycle}</span>`;
   for (const option of select.options) {
     const flight = FLIGHTS_OZP.find(f => String(f.no) === option.value);
     if (!flight) continue;
-    const full = `FV ${flight.no} • ${flight.route}`;
-    const short = `FV ${flight.no} · ${flight.route.replace(/\s*\([^)]*\)/g, "").trim()}`;
-    option.textContent = phoneLayout.matches ? short : full;
+    option.textContent = `FV ${flight.no} · ${phoneLayout.matches ? compactRoute(flight) : flight.route}`;
   }
-  select.title = FLIGHTS_OZP.find(f => String(f.no) === select.value)?.route || "Выбор рейса";
+  select.title = current?.route || "Выбор рейса";
 }
 
 function togglePhoneSearch() {
@@ -3861,7 +3899,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       document.querySelector(".app").inert = false;
       document.body.style.overflow = byId("orderSheet").classList.contains("open") ? "hidden" : "";
-      if (modalReturnFocus && modalReturnFocus.isConnected) modalReturnFocus.focus();
+      if (modalReturnFocus && modalReturnFocus.isConnected) modalReturnFocus.focus({preventScroll:true});
     }
   }).observe(modal,{attributes:true,attributeFilter:["class"]});
   document.addEventListener("keydown",e => {
