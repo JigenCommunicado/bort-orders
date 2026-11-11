@@ -53,7 +53,7 @@ try {
 html { -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased; }
 body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 var(--font); font-variant-numeric:tabular-nums; }
 button,input,select,textarea { font:inherit; color:inherit; }
-button { cursor:pointer; border:0; background:none; touch-action:manipulation; }
+button { appearance:none; -webkit-appearance:none; cursor:pointer; border:0; background:none; touch-action:manipulation; }
 button:disabled { cursor:not-allowed; opacity:.4; }
 h1,h2,h3,h4,p { margin:0; }
 [hidden] { display:none!important; }
@@ -73,15 +73,14 @@ button,input,textarea,select { transition:background-color .16s,border-color .16
 .rail-foot { position:fixed; bottom:26px; left:0; width:92px; text-align:center; color:#ffffff; z-index:41; font-size:10px; letter-spacing:.16em; pointer-events:none; }
 .topbar { background:var(--surface); border-bottom:1px solid var(--line); padding:12px 24px; }
 .topbar-inner { max-width:1370px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.wordmark { display:flex; flex-direction:column; flex:none; align-items:flex-start; padding:7px 12px; border-radius:8px; line-height:1.15; color:#fff; background:var(--brand); }
-.wordmark strong { font-size:21px; }
-.wordmark small { font-size:10px; margin-top:3px; }
+.wordmark { display:flex; flex:none; align-items:center; justify-content:center; padding:14px; background:#fff; color:#d0112b; }
+.airline-logo { display:block; flex:none; width:144px; height:auto; aspect-ratio:334 / 53; }
 .flight-identity { display:flex; align-items:center; gap:16px; min-width:0; }
 .flight-block { min-width:0; }
 .flight-picker { display:flex; align-items:center; gap:9px; }
 .flight-picker > span { color:var(--accent); display:flex; align-items:center; }
 .flight-picker .ic { width:18px; height:18px; }
-.flight-sel { font-size:13px; font-weight:650; border:none; background:transparent; min-width:0; max-width:265px; height:30px; padding:0 18px 0 0; cursor:pointer; }
+.flight-sel { font-size:13px; font-weight:650; border:none; background:transparent; min-width:0; max-width:min(265px,100%); height:30px; padding:0 18px 0 0; cursor:pointer; }
 .flight-sel option { background:var(--surface); }
 .flight-pill { font-size:11px; color:var(--muted); padding-left:27px; margin-top:2px; }
 .flight-pill b { font-weight:500; }
@@ -609,9 +608,9 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .topbar { padding:calc(7px + env(safe-area-inset-top)) 12px 7px; }
   .topbar-inner { flex-wrap:nowrap; gap:8px; }
   .flight-identity { width:auto; flex:1; justify-content:flex-start; min-width:0; gap:10px; }
-  .wordmark { flex:none; padding:6px 8px; }
-  .wordmark strong { font-size:17px; }
-  .wordmark small,.flight-picker > span,#flightSummaryPill { display:none; }
+  .wordmark { flex:none; padding:10px; }
+  .airline-logo { width:112px; }
+  .flight-picker > span,#flightSummaryPill { display:none; }
   .flight-block { flex:1; min-width:0; max-width:none; }
   .flight-picker { display:block; position:relative; }
   .flight-picker::after { content:""; position:absolute; right:4px; top:17px; width:6px; height:6px; border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted); transform:rotate(45deg); pointer-events:none; }
@@ -721,13 +720,22 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   #toast { bottom:calc(72px + env(safe-area-inset-bottom)); font-size:12px; }
   body:has(.order-sheet.open) #toast { bottom:calc(74px + env(safe-area-inset-bottom)); }
 }
-@media(max-width:359px) {
-  .flight-identity { gap:7px; }
-  .wordmark { padding-inline:7px; }
-  .flight-sel { font-size:16px; }
+@media(max-width:479px) {
   .phone-flight-meta { font-size:10px; }
   .phone-flight-route { display:block; }
   .phone-flight-count { display:none; }
+}
+@media(max-width:359px) {
+  .topbar-inner { display:grid; grid-template-columns:minmax(0,1fr) 44px 44px; gap:2px 8px; }
+  .flight-identity { display:contents; }
+  .wordmark { grid-column:1; grid-row:1; justify-self:start; }
+  #btnFindFlight { grid-column:2; grid-row:1; }
+  #btnPhoneMenu { grid-column:3; grid-row:1; }
+  .flight-block { grid-column:1 / -1; grid-row:2; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .flight-picker { min-width:0; flex:1; }
+  .phone-flight-meta { flex:none; }
+  .phone-flight-route { display:none; }
+  .flight-sel { font-size:16px; }
   .workspace { padding-left:10px; padding-right:10px; }
   .cabin-tools .chip { padding-left:7px; padding-right:7px; }
 }
@@ -903,6 +911,12 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
 }
 @media print { #sheetDragHandle { display:none!important; } }
 
+/* A secondary action, separated from the normal readback/next action. */
+#sheetActions .repeat-order-action { flex:1 0 100%; color:var(--secondary); border-color:var(--line-strong); background:var(--surface-2); }
+.repeat-shortage-ack { display:flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; cursor:pointer; }
+.repeat-shortage-ack input { flex:none; width:22px; height:22px; accent-color:var(--brand); }
+#repeatOrderStatus:empty { display:none; }
+
 /* Independent from save status: shell availability is not an order backup. */
 .offline-panel { margin:0 28px 4px; border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
 .offline-panel summary { display:flex; align-items:center; gap:7px; cursor:pointer; min-height:36px; list-style:none; }
@@ -943,7 +957,30 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
   <header class="topbar">
     <div class="topbar-inner">
       <div class="flight-identity">
-        <div class="wordmark"><strong>Борт</strong><small>Бизнес-класс</small></div>
+        <div class="wordmark"><svg class="airline-logo" role="img" aria-label="Авиакомпания Россия" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 334 53" fill="currentColor" focusable="false">
+<path d="M63.32,16.39c0-6.69-8.33-12.12-22.52-12.12h-2.04l4.18-3.99l-6.21,0.03L26.49,4.27h-16.3
+			C4.46,4.27,1.28,5.67,0,8.41h33.51c9.24,0,15.45,1.4,15.45,7.77c0,6.87-7.47,8.2-15.45,8.2H18.46l13.32,14.33
+			c11.29,11.89,21.88,14.01,35.03,14.01L43.08,28.45C55.67,28,63.32,22.67,63.32,16.39L63.32,16.39z"/>
+<path d="M105.3,31.66c-2.52,0-4.56-0.3-6.12-0.67V17.18c1.61-0.19,3.7-0.36,6.12-0.36
+			c5.83,0,9.23,2.35,9.23,7.25C114.53,29.07,110.89,31.66,105.3,31.66L105.3,31.66z M106.18,13.84c-4.91,0-9.67,0.59-14.77,0.78
+			v27.75h7.77v-8.09c2.22,0.2,4.67,0.36,7,0.36c10.44,0,17.05-3.07,17.05-10.56C123.22,16.58,116.62,13.84,106.18,13.84
+			L106.18,13.84z"/>
+<path d="M149.84,40.11c-6.17,0-10.44-4.51-10.44-11.67c0-7.11,4.28-11.77,10.44-11.77
+			c6.21,0,10.44,4.66,10.44,11.77C160.28,35.55,156.05,40.11,149.84,40.11L149.84,40.11z M149.84,13.7c-11.51,0-19.14,6-19.14,14.75
+			c0,8.74,7.63,14.64,19.14,14.64c11.51,0,19.13-5.91,19.13-14.64C168.97,19.7,161.35,13.7,149.84,13.7L149.84,13.7z"/>
+<polygon points="282.28,14.59 265.04,36.56 265.04,14.59 257.26,14.59 257.26,42.5 260.37,42.5 
+			265.04,42.5 282.28,20.48 282.28,42.5 290.05,42.5 290.05,14.59 286.89,14.59 		"/>
+<path d="M197.48,16.78c6.02,0,9.61,3.22,9.61,3.22l1.61-4.13c0,0-4.52-2.17-12.19-2.17
+			c-11.07,0-18.84,6-18.84,14.75c0,8.74,7.29,14.65,19.33,14.65c7.38,0,11.66-2.3,11.66-2.3v-4.44c0,0-3.59,3.41-10.83,3.41
+			c-7.38,0-11.46-4.25-11.46-11.31C186.36,21.43,190.53,16.78,197.48,16.78L197.48,16.78z"/>
+<path d="M326.23,29.79h-7.24c-5.05,0-8.11-2.4-8.11-6.72c0-4.23,3.06-6.24,8.11-6.24
+			c2.74,0,5.3,0.23,7.24,0.48V29.79z M318.12,13.84c-9.42,0-15.93,2.35-15.93,9.27c0,4.57,2.64,7.26,7.28,8.57l-10.35,11.22h0.97
+			c7.09,0,10.59-1.49,15.15-6.97l2.71-3.28c0.05,0,0.1,0,0.16,0h8.11v9.7H334v-9.7V14.6C327.44,14.41,323.03,13.84,318.12,13.84
+			L318.12,13.84z"/>
+<path d="M235.31,16.78c6.02,0,9.61,3.22,9.61,3.22l1.61-4.13c0,0-4.52-2.17-12.19-2.17
+			c-11.07,0-18.85,6-18.85,14.75c0,8.74,7.29,14.65,19.33,14.65c7.38,0,11.66-2.3,11.66-2.3v-4.44c0,0-3.59,3.41-10.83,3.41
+			c-7.38,0-11.46-4.25-11.46-11.31C224.19,21.43,228.37,16.78,235.31,16.78L235.31,16.78z"/>
+</svg></div>
         <div class="flight-block"><div class="flight-picker">
           <span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m22 2-7.5 20-3.8-8.7L2 9.5 22 2Z"/><path d="m22 2-11.3 11.3"/></svg></span>
           <select class="flight-sel" id="selFlight" aria-label="Выбор рейса"></select>
@@ -1353,6 +1390,7 @@ function clearEntryDialog() {
   document.getElementById("modalBack").removeAttribute("aria-labelledby");
   box.replaceChildren();
   pendingReadback = null;
+  pendingRepeatOrder = null;
   entryDialogOpener = null;
 }
 
@@ -1604,6 +1642,132 @@ function initSheetGestures() {
   for (const el of [sheet, modal]) observer.observe(el,{attributes:true,attributeFilter:["class"]});
 }
 
+/* Repeat selections locally; never copy a passenger record or overwrite an order. */
+let pendingRepeatOrder = null;
+
+function repeatOrderSelection(seat) {
+  const result = {ap:"", s1:{}, s2:{}};
+  const drinks = (source,target,field) => {
+    const choices = drinkChoices(source,field);
+    target[field] = choices[0] || "";
+    if (choices.length > 1) target[field+"More"] = choices.slice(1);
+  };
+  drinks(seat,result,"ap");
+  for (const n of [1,2]) {
+    const source = seat["s"+n], target = result["s"+n];
+    target.z = n === 1 || S.spec2Code ? source.z : "";
+    target.m = n === 1 || S.spec2Code ? source.m : "";
+    for (const field of ["zd","md","t"]) {
+      if (n === 1 || S.spec2Code) drinks(source,target,field);
+      else target[field] = "";
+    }
+  }
+  return result;
+}
+function hasRepeatSelection(selection) {
+  return !!(selection.ap || hasCourseOrder(selection.s1) || hasCourseOrder(selection.s2));
+}
+function repeatDestination() {
+  const ids = getAllSeatIds(), index = ids.indexOf(activeSeatId);
+  return index >= 0 ? ids[index+1] || "" : "";
+}
+function repeatTargetHasOrder(seat) {
+  return !!seat && (!!drinkChoices(seat,"ap").length || [1,2].some(n =>
+    hasCourseOrder(seat["s"+n]) || seat["s"+n].status !== "pending"));
+}
+function repeatContext() {
+  return JSON.stringify([flightKey(S),S.cycle,S.spec1Code,S.spec2Code,S.layout,S.rations,S.stock]);
+}
+function renderRepeatOrderAction() {
+  const destination = repeatDestination();
+  if (!destination || !hasRepeatSelection(repeatOrderSelection(getSeat(activeSeatId)))) return;
+  const button = document.createElement("button");
+  button.type = "button"; button.id = "btnRepeatOrder"; button.className = "btn repeat-order-action";
+  button.textContent = "Повторить выбор → " + destination;
+  button.setAttribute("aria-haspopup","dialog");
+  document.getElementById("sheetActions").prepend(button);
+}
+function repeatSelectionHtml(selection) {
+  const row = (label,values) => values.length ? `<div><dt>${label}</dt><dd>${values.map(v => esc(displayName(v))).join(" · ")}</dd></div>` : "";
+  const section = (label,rows) => rows ? `<section class="entry-readback-section"><h3>${label}</h3><dl>${rows}</dl></section>` : "";
+  return section("Аперитивы",row("Напитки",drinkChoices(selection,"ap"))) + [1,2].map(n => {
+    const c = selection["s"+n];
+    return section("Питание " + n,row("Закуска",c.z ? [c.z] : []) + row("Напитки к закуске",drinkChoices(c,"zd")) + row("Горячее",c.m ? [c.m] : []) + row("Напитки к горячему",drinkChoices(c,"md")) + row("Чай / кофе",drinkChoices(c,"t")));
+  }).join("");
+}
+function repeatShortages(selection) {
+  return [1,2].flatMap(n => ["z","m"].flatMap(field => {
+    const value = selection["s"+n][field];
+    if (!value) return [];
+    const stats = getCourseDishStats(n,field).find(d => d.short === value);
+    // Restored unknown dishes cannot be assumed to be in stock.
+    return !stats || stats.rem < 1 ? [`Питание ${n}: ${displayName(value)} — ${stats ? "остаток " + stats.rem : "нет в текущем меню"}`] : [];
+  }));
+}
+function openRepeatOrder(opener) {
+  if (document.getElementById("modalBack").classList.contains("open")) return;
+  const destination = repeatDestination();
+  const selection = repeatOrderSelection(getSeat(activeSeatId));
+  if (!destination || !hasRepeatSelection(selection)) return;
+  if (repeatTargetHasOrder(S.seats[destination])) {
+    openEntryDialog("repeat-order",opener,`Кресло ${destination}: заказ уже есть`,`<p>Повторение недоступно: у этого кресла уже выбраны блюда или напитки либо отмечен статус обслуживания. Существующие данные не изменены.</p><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>К заказу</button></div>`);
+    return;
+  }
+  const shortages = repeatShortages(selection);
+  pendingRepeatOrder = {
+    context:repeatContext(),source:activeSeatId,destination,step:activeStep,
+    selection:JSON.stringify(selection),target:JSON.stringify(S.seats[destination] || null),shortages:JSON.stringify(shortages)
+  };
+  openEntryDialog("repeat-order",opener,`Повторить ${activeSeatId} → ${destination}`,`<p class="subtle">Проверьте выбор с обоими гостями. Будут добавлены только блюда и напитки из списка ниже.</p><p class="safety-note">Имя, обращение, аллергии, пожелания и режим отдыха не переносятся. Данные гостя кресла ${esc(destination)} сохранятся. Статусы подачи не копируются. Отдельно уточните ограничения и пожелания у нового гостя.</p>${S.seats[destination]?.allergy ? `<p class="safety-note">У гостя кресла ${esc(destination)} записаны ограничения. До повторения сверьте их в карточке и уточните состав по актуальной ТТК.</p>` : ""}<div id="repeatOrderItems">${repeatSelectionHtml(selection)}</div>${shortages.length ? `<div class="safety-note"><strong>Проверьте наличие</strong><ul>${shortages.map(text => `<li>${esc(text)}</li>`).join("")}</ul><label class="repeat-shortage-ack"><input type="checkbox" id="repeatShortageAck">Подтверждаю заказ сверх остатка / вне текущего меню после сверки наличия</label></div>` : ""}<p id="repeatOrderStatus" class="safety-note" role="status"></p><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>Отмена</button><button type="button" class="btn primary" id="btnConfirmRepeatOrder">Повторить и открыть ${esc(destination)}</button></div>`);
+}
+function confirmRepeatOrder() {
+  const pending = pendingRepeatOrder;
+  if (!pending) return;
+  const current = pending.context === repeatContext() && pending.source === activeSeatId && pending.step === activeStep && pending.destination === repeatDestination() && pending.selection === JSON.stringify(repeatOrderSelection(getSeat(activeSeatId))) && pending.target === JSON.stringify(S.seats[pending.destination] || null) && !repeatTargetHasOrder(S.seats[pending.destination]) && pending.shortages === JSON.stringify(repeatShortages(JSON.parse(pending.selection)));
+  if (!current) { closeModal(); toast("Данные изменились. Откройте повторение заново и проверьте выбор."); return; }
+  const status = document.getElementById("repeatOrderStatus");
+  if (JSON.parse(pending.shortages).length && !document.getElementById("repeatShortageAck").checked) {
+    status.textContent = "Подтвердите наличие и заказ сверх остатка либо отмените повторение."; return;
+  }
+  const selection = JSON.parse(pending.selection);
+  const before = S.seats[pending.destination];
+  const updatedAt = S.updatedAt;
+  const target = before ? clone(before) : blankSeat();
+  target.ap = selection.ap;
+  delete target.apMore;
+  if (selection.apMore) target.apMore = selection.apMore.slice();
+  for (const n of S.spec2Code ? [1,2] : [1]) {
+    const course = target["s"+n], source = selection["s"+n];
+    for (const field of ["z","m","zd","md","t"]) {
+      course[field] = source[field];
+      delete course[field+"More"];
+      if (source[field+"More"]) course[field+"More"] = source[field+"More"].slice();
+    }
+    course.status = "pending";
+  }
+  S.seats[pending.destination] = target;
+  if (!saveState()) {
+    if (before) S.seats[pending.destination] = before;
+    else delete S.seats[pending.destination];
+    S.updatedAt = updatedAt;
+    status.textContent = "Повторение не выполнено. " + storageProblem;
+    return;
+  }
+  const destination = pending.destination;
+  closeModal(); activeSeatId = destination; renderAll();
+  queueMicrotask(() => document.getElementById("btnNextSeat").focus({preventScroll:true}));
+  toast("Выбор повторён для кресла " + destination + ". Уточните ограничения и пожелания гостя.");
+}
+function initRepeatOrder() {
+  document.getElementById("orderSheet").addEventListener("click",e => {
+    const opener = e.target.closest("#btnRepeatOrder");
+    if (opener) openRepeatOrder(opener);
+  });
+  document.getElementById("modalBack").addEventListener("click",e => {
+    if (e.target.closest("#btnConfirmRepeatOrder")) confirmRepeatOrder();
+  });
+}
+
 /* Presentation state only: no new order fields, storage keys or network requests. */
 let orderEntryViewKey = "";
 function orderEntryKey() { return [flightKey(S), activeSeatId, activeStep].join("|"); }
@@ -1631,6 +1795,7 @@ function finishOrderEntryView(view) {
   prev.title = prev.getAttribute("aria-label"); next.title = next.getAttribute("aria-label");
   const forward = document.getElementById("btnNextSeatStep");
   if (forward) forward.textContent = index < ids.length-1 ? "Далее · " + ids[index+1] + " →" : "К схеме салона";
+  renderRepeatOrderAction();
   const summary = document.getElementById("sheetQuickSummary");
   const seat = getSeat(activeSeatId), course = seat[activeStep];
   summary.replaceChildren();
@@ -3674,6 +3839,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initQuickOrder();
   initServiceFlow();
   initSheetGestures();
+  initRepeatOrder();
   renderAll();
   if (!storageConflict) saveState();
   const byId = id => document.getElementById(id);
