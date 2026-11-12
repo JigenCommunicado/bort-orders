@@ -1,13 +1,13 @@
 /* Offline shell only: no orders, JSON exports or runtime responses enter this cache. */
 const ASSETS = {
-  "index.html": "3bbedb7a683522e9ed8667c5564b397a4f3329d39568496515af52d525a993b8",
+  "index.html": "568a51ba7bf36f7d284fc33f1092fb673570859cffe653a9a2dd2dadeea778b2",
   "manifest.webmanifest": "b74f53dc4506af872018c2ed50d863644a4486aac7c4b18765644e9586412260",
   "icons/icon-192.png": "413698b69ac3604810893b67a9c62f748a571d732daeb98404d05eadb65afec2",
   "icons/icon-512.png": "8fffbf02aad0ee095c1dc8572aa216a56430f6604e16905e23a083713d61d2c9",
   "icons/maskable-512.png": "0e1532ec37ad583cc69841afeca9a29cb8a48db47ddd5898b830dafbd1b0996d",
   "icons/apple-touch-icon.png": "70f20f00626021512107bf2920580cf3fa7a3ddb46d291c370d463190f8305d5"
 };
-const VERSION = "5cec5122860dfcdc";
+const VERSION = "9bfaf59465ad69d5";
 const CACHE = "bort-shell-" + VERSION;
 const base = self.registration.scope;
 const urlFor = path => new URL(path, base).href;
