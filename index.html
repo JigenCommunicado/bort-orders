@@ -959,7 +959,7 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
 }
 
 #sheetDragHandle { display:none; }
-@media(max-width:767px), (max-width:1019px) and (max-height:500px) {
+@media(max-width:767px), (max-width:1019px) and (max-height:500px), (min-width:768px) and (max-width:1024px) {
   #orderSheet.open { transform:translate3d(var(--sheet-drag-x,0px),var(--sheet-drag-y,0px),0); }
   #orderSheet.open[data-sheet-drag] { transition:none; }
   /* Keep the outside edges native for OS/browser navigation gestures. */
@@ -990,6 +990,32 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
   #orderSheet { transition:none; }
 }
 @media print { #sheetDragHandle { display:none!important; } }
+
+/* iPad mini 4 / iPad Air portrait: leave room for the thumb-friendly bottom rail. */
+@media (min-width:768px) and (max-width:1024px) {
+  .topbar { padding:14px 20px; }
+  .topbar-inner { gap:8px; }
+  .topbar-inner > .top-actions { order:1; }
+  .topbar-inner > .phone-menu-button { order:2; min-width:44px; min-height:44px; }
+  .top-actions { gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .top-actions .manual-meal-trigger { min-height:44px; order:99; }
+  .manual-meal-hint { display:none; }
+  .workspace { max-width:1000px; padding:20px 24px 112px; gap:18px; }
+  .section-heading { margin-bottom:14px; }
+  .service-switch .chip { min-height:44px; }
+  .bottom-nav { height:calc(76px + env(safe-area-inset-bottom)); padding:7px 20px env(safe-area-inset-bottom); gap:14px; }
+  .nav-tab { min-height:60px; border-radius:12px; }
+  .nav-tab .ic { width:22px; height:22px; }
+  .nav-tab span { font-size:11px; }
+  .order-sheet { max-width:760px; max-height:88dvh; border-radius:24px 24px 0 0; }
+  .sheet-header { min-height:68px; padding-block:16px 12px; }
+  .sheet-header .icon-pill-btn { min-width:48px; min-height:48px; }
+  .sheet-content { padding:20px 24px 28px; gap:20px; }
+  .sheet-content .chip,.sheet-content .btn { min-height:48px; }
+  .sheet-actions { padding:10px 24px; }
+  .sheet-actions .btn { min-height:50px; }
+  .modal-box { max-width:720px; }
+}
 
 /* A secondary action, separated from the normal readback/next action. */
 #sheetActions .repeat-order-action { flex:1 0 100%; color:var(--secondary); border-color:var(--line-strong); background:var(--surface-2); }
@@ -1075,7 +1101,7 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
 			c-11.07,0-18.85,6-18.85,14.75c0,8.74,7.29,14.65,19.33,14.65c7.38,0,11.66-2.3,11.66-2.3v-4.44c0,0-3.59,3.41-10.83,3.41
 			c-7.38,0-11.46-4.25-11.46-11.31C224.19,21.43,228.37,16.78,235.31,16.78L235.31,16.78z"/>
 </svg></div>
-        <div class="flight-block"><button type="button" class="manual-meal-trigger" id="btnChooseMeal" aria-haspopup="dialog" title="Выбор базы, цикла и кода рациона">Выбрать рацион</button>
+        <div class="flight-block">
           <select class="flight-sel" id="selFlight" aria-label="Внутренний выбор рейса" hidden></select>
           <div class="flight-pill" id="flightSummaryPill"></div><div class="phone-flight-meta phone-only" id="phoneFlightMeta"></div>
         </div>
@@ -1083,6 +1109,7 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
 
       <button type="button" class="phone-menu-button settings-open-button" id="btnPhoneMenu" aria-label="Настройки и помощь" title="Настройки и помощь" aria-haspopup="dialog" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.5 2-2 .9-1.8-.6-2 3.4 1.4 1.4-.1 2.3-1.4 1.4 2 3.4 2-.5 1.9 1 .5 2h4l.5-2 1.9-1 2 .5 2-3.4-1.4-1.4-.1-2.3 1.4-1.4-2-3.4-1.8.6-2-.9-.5-2z"/><circle cx="12" cy="11.6" r="3"/></svg><span>Настройки</span></button>
       <div class="top-actions"><button type="button" class="icon-pill-btn" id="btnFlightSummary" aria-haspopup="dialog">Сводка рейса</button>
+        <button type="button" class="manual-meal-trigger" id="btnChooseMeal" aria-haspopup="dialog" title="Выбор базы, цикла и кода рациона">Выбрать рацион</button>
         <label class="date-control">Дата рейса <input type="date" id="flightDate" aria-label="Дата рейса"></label>
         <button type="button" class="icon-pill-btn" id="btnSessions"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18m-12 4h2m3 0h2"/></svg><span>Рейсы</span></button>
         <div class="manual-meal-hint">База · цикл · код рациона</div>
@@ -1131,7 +1158,6 @@ body:has(#modalBack.open > [data-entry-dialog="guest-menu"]) #toast { visibility
         <button type="button" class="icon-pill-btn" id="btnPrevSeat" aria-label="Предыдущее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6"/></svg></button>
         <div class="sheet-seat-title" id="sheetSeatTitle">Кресло 1A</div>
         <div style="display:flex; align-items:center; gap:6px;">
-          <button type="button" class="icon-pill-btn" id="btnGuestMenu" aria-label="Меню гостя на русском и английском" title="Меню гостя · RU / EN" aria-haspopup="dialog">Меню</button>
           <button type="button" class="icon-pill-btn" id="btnToggleServed" hidden>Подано</button>
           <button type="button" class="icon-pill-btn" id="btnNextSeat" aria-label="Следующее кресло"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 6 6 6-6 6"/></svg></button>
           <button type="button" class="icon-pill-btn only-mobile" id="btnCloseSheet" aria-label="Закрыть заказ"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
@@ -1414,7 +1440,7 @@ function documentEnglishName(value) {
     if (dish?.en) return dish.en;
     if (Object.hasOwn(spec.english || {},value)) return spec.english[value];
   }
-  return legacyGuestEnglishName(value);
+  return value;
 }
 function applyFlightSelection(no,cycle,reset,date=S.date) {
   const key=date+':'+no;
@@ -1542,171 +1568,6 @@ function initDocumentSchedules() {
 }
 
 function guestEnglishName(value) { return documentEnglishName(value); }
-/* Standalone translations for the built-in guest menu. Unknown values stay unchanged. */
-const GUEST_ENGLISH_NAMES = Object.freeze({
-  "🧀 Сырно-мясная нарезка": "🧀 Cheese and cold cuts",
-  "🍳 Омлет с грибами": "🍳 Mushroom omelette",
-  "🥞 Блинчики с яблоком": "🥞 Apple pancakes",
-  "🥣 Каша гурьевская": "🥣 Guryev porridge",
-  "🧀 Сыр Ларец, Бри и индейка": "🧀 Larets cheese, Brie and turkey",
-  "🍳 Фриттата с цуккини": "🍳 Zucchini frittata",
-  "🥞 Оладьи с вишней": "🥞 Pancakes with cherries",
-  "🥣 Каша рисовая с персиком": "🥣 Rice porridge with peach",
-  "🧀 Качотта с пажитником и пастрами": "🧀 Caciotta with fenugreek and pastrami",
-  "🍳 Фриттата со шпинатом": "🍳 Spinach frittata",
-  "🥞 Сырники с вишней": "🥞 Cottage cheese pancakes with cherries",
-  "🥣 Каша пшеничная с яблоком": "🥣 Wheat porridge with apple",
-  "🧀 Камамбер, Чеддер и куриное филе": "🧀 Camembert, Cheddar and chicken fillet",
-  "🍳 Омлет со шпинатом и сыром": "🍳 Spinach and cheese omelette",
-  "🥞 Блины с гуляшом из курицы": "🥞 Pancakes with chicken goulash",
-  "🥣 Каша пшённая с тыквой": "🥣 Millet porridge with pumpkin",
-  "🦆 Утиная грудка и индейка": "🦆 Duck breast and turkey",
-  "🍳 Омлет с сыром Бешамель": "🍳 Cheese omelette with béchamel",
-  "🥩 Ростбиф, курица и Бри": "🥩 Roast beef, chicken and Brie",
-  "🥞 Блинчик с муссом из лосося": "🥞 Pancake with salmon mousse",
-  "🧀 Камамбер, Гауда и говядина": "🧀 Camembert, Gouda and beef",
-  "🥞 Блинчик с гуляшом из курицы": "🥞 Pancake with chicken goulash",
-  "🧀 Камамбер, Чеддер и курица": "🧀 Camembert, Cheddar and chicken",
-  "🐟 Рыбная: Лосось х/к и мусс": "🐟 Fish starter: cold-smoked salmon and mousse",
-  "🥩 Мясная: Пастрами и мусс": "🥩 Meat starter: pastrami and mousse",
-  "🐟 Филе лосося с песто": "🐟 Salmon fillet with pesto",
-  "🥩 Кебаб из баранины": "🥩 Lamb kebab",
-  "🍗 Грудка в жёлтом карри": "🍗 Chicken breast in yellow curry",
-  "🐟 Рыбная: Гравлакс и тартар": "🐟 Fish starter: gravlax and tartare",
-  "🥩 Мясная: Брезаола и грудка": "🥩 Meat starter: bresaola and chicken breast",
-  "🐟 Судак в томатном соусе": "🐟 Pike-perch in tomato sauce",
-  "🥩 Баранина с вишней и полентой": "🥩 Lamb with cherries and polenta",
-  "🍗 Грудка с брокколи и рисом": "🍗 Chicken breast with broccoli and rice",
-  "🐟 Рыбная: Лосось + Салат": "🐟 Fish starter: salmon and salad",
-  "🥩 Мясная: Индейка + Салат": "🥩 Meat starter: turkey and salad",
-  "🐟 Рыбная: Гравлакс + Салат": "🐟 Fish starter: gravlax and salad",
-  "🥩 Мясная: Брезаола + Салат": "🥩 Meat starter: bresaola and salad",
-  "🐟 Рыбная: Лосось и мусс креветок": "🐟 Fish starter: salmon and shrimp mousse",
-  "🥩 Мясная: Рулет с грибами": "🥩 Meat starter: chicken breast stuffed with mushrooms",
-  "🐟 Треска с жёлтым рисом": "🐟 Cod with yellow rice",
-  "🥩 Гуляш венгерский с пюре": "🥩 Hungarian goulash with mashed potatoes",
-  "🍗 Курица Терияки с пастой Орзо": "🍗 Teriyaki chicken with orzo",
-  "🐟 Рыбная: Гравлакс и оладьи": "🐟 Fish starter: gravlax and pancakes",
-  "🥩 Мясная: Ростбиф и сыр васаби": "🥩 Meat starter: roast beef and wasabi cheese",
-  "🐟 Треска в мандариновом соусе": "🐟 Cod in mandarin sauce",
-  "🥩 Бефстроганов с пюре": "🥩 Beef Stroganoff with mashed potatoes",
-  "🍗 Курица Буна с диким рисом": "🍗 Bhuna chicken with wild rice",
-  "🐟 Рыбная ГМС: Лосось и креветки": "🐟 Fish starter: salmon and shrimp",
-  "🥩 Мясная ГМС: Грудка с грибами": "🥩 Meat starter: chicken breast with mushrooms",
-  "🐟 Палтус Конфи с диким рисом": "🐟 Halibut confit with wild rice",
-  "🥩 Баранья лопатка с сельдереем": "🥩 Lamb shoulder with celery",
-  "🍗 Рулет из перепёлки": "🍗 Quail roulade",
-  "🐟 Рыбная ГМС: Лосось и муксун": "🐟 Fish starter: salmon and muksun whitefish",
-  "🥩 Мясная ГМС: Пастрами и су-вид": "🥩 Meat starter: beef pastrami and sous-vide chicken",
-  "🐟 Филе Дорадо с брокколи": "🐟 Sea bream fillet with broccoli",
-  "🥩 Говяжьи щёчки с полентой": "🥩 Beef cheeks with polenta",
-  "🍗 Бедро в горчичном соусе": "🍗 Chicken thigh in mustard sauce",
-  "🍗 Бедро в меду с тыквой и киноа": "🍗 Honey-glazed chicken thigh with pumpkin and quinoa",
-  "🥩 Вырезка говяжья с Орзо": "🥩 Beef tenderloin with orzo",
-  "🐟 Тартар из лосося и авокадо": "🐟 Salmon and avocado tartare",
-  "🍗 Грудка карри с гречкой": "🍗 Curry chicken breast with buckwheat",
-  "🥞 Блинчики с лососем и сыром": "🥞 Pancakes with salmon and cheese",
-  "🐟 Треска с красным рисом": "🐟 Cod with red rice",
-  "🍗 Филе карри и мясной мусс": "🍗 Curry chicken fillet and meat mousse",
-  "🥩 Гуляш из говядины с пюре": "🥩 Beef goulash with mashed potatoes",
-  "🍗 Индейка карри с Птитимом": "🍗 Turkey curry with ptitim pasta",
-  "🥩 Гуляш из говядины": "🥩 Beef goulash",
-  "🍗 Бедро с гречкой васаби": "🍗 Chicken thigh with wasabi buckwheat",
-  "Йогурт Epica 130г + Джем клубничный 30г": "Epica yogurt 130 g + strawberry jam 30 g",
-  "Йогурт Epica 130г + Джем абрикосовый 30г": "Epica yogurt 130 g + apricot jam 30 g",
-  "Биойогурт ЭкоНива 75г + Джем клубничный": "EkoNiva bio yogurt 75 g + strawberry jam",
-  "Биойогурт ЭкоНива 75г + Джем абрикосовый": "EkoNiva bio yogurt 75 g + apricot jam",
-  "Мороженое ванильное 60г с миндалём + Йогурт Epica": "Vanilla ice cream 60 g with almonds + Epica yogurt",
-  "Пирожное «Медовик» 70г + Йогурт Epica": "Honey cake 70 g + Epica yogurt",
-  "Панна-котта карамельная 75г + Йогурт Epica": "Caramel panna cotta 75 g + Epica yogurt",
-  "Пирожное «Медовик» / Вишнёвый клафути + Йогурт Epica": "Honey cake / cherry clafoutis + Epica yogurt",
-  "Пирожное «Шоколадный Драмбуи» 72г + Йогурт Epica": "Chocolate Drambuie cake 72 g + Epica yogurt",
-  "Мороженое ванильное 60г с миндалём": "Vanilla ice cream 60 g with almonds",
-  "Пирожное «Медовик» (от Новикова) 70г": "Novikov honey cake 70 g",
-  "Пирожное «Наполеон» 70г": "Napoleon cake 70 g",
-  "Яблочный пирог с ванильным соусом / Ореховый пирог": "Apple pie with vanilla sauce / nut pie",
-  "Вишнёвый клафути / Яблочный пирог": "Cherry clafoutis / apple pie",
-  "Пирожное «Шоколадный Драмбуи» 72г": "Chocolate Drambuie cake 72 g",
-  "Пирожное «Вишнёвый клафути» 65г": "Cherry clafoutis cake 65 g",
-  "Булочка деревенская, Круассан, Хлеб чёрный": "Rustic roll, croissant, dark bread",
-  "Булочка французская, Круассан, Хлеб чёрный": "French roll, croissant, dark bread",
-  "Круассан, Булочка деревенская, Хлеб чёрный": "Croissant, rustic roll, dark bread",
-  "Булочка Брецель, Булочка деревенская, Хлеб чёрный": "Pretzel roll, rustic roll, dark bread",
-  "Булочка Брецель, Хлеб чёрный": "Pretzel roll, dark bread",
-  "🥂 Игристое": "🥂 Sparkling wine",
-  "🍷 Вино": "🍷 Wine",
-  "🥃 Крепкое": "🥃 Spirits",
-  "🍸 Коктейли": "🍸 Cocktails",
-  "🧃 Б/А": "🧃 Non-alcoholic",
-  "Чай чёрный": "Black tea",
-  "Чай с лимоном": "Tea with lemon",
-  "Чай зелёный": "Green tea",
-  "Кофе американо": "Americano",
-  "Кофе со сливками": "Coffee with cream",
-  "Кофе с молоком": "Coffee with milk",
-  "Вода с лимоном": "Water with lemon",
-  "Анима Миллезимато": "Anima Millesimato Brut",
-  "Высокий Берег Брют": "Vysokiy Bereg Extra Brut",
-  "Креман Bestheim": "Bestheim Crémant d’Alsace Brut",
-  "Абрау-Дюрсо 1870": "Abrau-Durso 1870 Brut",
-  "Кюве Александр": "Cuvée Alexandre Blanc de Blancs",
-  "Совиньон Захарьин (Бел)": "Zakharyin Sauvignon Blanc (white)",
-  "Ресто Грюнер (Бел)": "Resto Grüner Veltliner (white)",
-  "Пино Гриджио (Бел)": "Anima Pinot Grigio (white)",
-  "Каберне Перовских (Кр)": "Perovskikh Cabernet Sauvignon (red)",
-  "Анима Мисчела (Кр)": "Anima Miscela (red)",
-  "Пино Неро (Кр)": "Anima Pinot Nero–Sangiovese (red)",
-  "Водка Онегин (50мл)": "Onegin vodka",
-  "Виски Ballantine's": "Ballantine’s whisky",
-  "Виски Black Ram": "Black Ram whisky",
-  "Коньяк Roullet VS": "Roullet VS Cognac",
-  "Коньяк Арарат 7л": "Ararat Ani 7-year-old Armenian brandy",
-  "Пиво Балтика 7": "Baltika 7 lager",
-  "Виски-Закат": "Whisky Sunset",
-  "Коко": "Coco",
-  "Для своих": "For Friends",
-  "Каскад": "Cascade",
-  "Кровавая Мэри": "Bloody Mary",
-  "Микоян Кап": "Mikoyan Cup",
-  "Яблочный штрудель": "Apple Strudel cocktail",
-  "Вода б/г": "Still water",
-  "Вода с/г": "Sparkling water",
-  "Сок Апельсин": "Orange juice",
-  "Сок Яблоко": "Apple juice",
-  "Сок Томат": "Tomato juice",
-  "Мультифрукт": "Mixed fruit juice",
-  "Морс клюква": "Cranberry drink",
-  "Тархун": "Tarragon soda",
-  "Байкал": "Baikal herbal soda",
-  "Кола": "Cola",
-  "Биттер Лемон": "Bitter lemon tonic",
-  "Сок Rich": "Rich juice (orange, apple or tomato)",
-  "Вода Славда": "Slavda mineral water",
-  "Вода Баранчинская": "Baranchinskaya mineral water",
-  "Вода Шифа Су": "Shifa Su mineral water",
-  "Суп-крем из тыквы 150г с семечками (термос)": "Pumpkin cream soup with seeds, 150 g",
-  "Суп куриный 130г с вермишелью (термос)": "Chicken noodle soup, 130 g",
-  "🐟 Палтус, креветка и мусс с кетой": "Smoked halibut, prawn and cream cheese mousse with chum salmon",
-  "🍗 Куриное филе су-вид с птитимом": "Sous-vide chicken fillet with ptitim pasta",
-  "🐟 Палтус, лосось и салат с тунцом": "Smoked halibut, lightly salted salmon and Greek-style tuna salad",
-  "🥩 Говядина в ворчестере с картофелем": "Beef in Worcestershire sauce with potatoes",
-  "🥩 Пастрами, ростбиф и мясной мусс": "Beef pastrami, roast beef and meat mousse",
-  "🐟 Треска с рисом и брокколи": "Cod with basmati rice and broccoli",
-  "🍗 Пастрами из индейки и брезаола": "Turkey pastrami and beef bresaola",
-  "🥩 Говядина с розмарином и полбой": "Rosemary beef with spelt and vegetables",
-  "Мороженое ванильное 60г, обжаренные хлопья миндаля 10г": "Vanilla ice cream, 60 g, with toasted almond flakes, 10 g",
-  "Панна котта кофейная 70г, шоколадная стружка 2г": "Coffee panna cotta, 70 g, with chocolate shavings, 2 g",
-  "Рулет меренговый с малиной 70г": "Raspberry meringue roulade, 70 g",
-  "Булочка Брецель 35г (100%), хлеб чёрный 20г (100%, с 06.12.2024)": "Pretzel roll, 35 g (100% loading); dark bread, 20 g (100% loading, from 6 December 2024)",
-  "Evervess Роял": "Evervess Royal (Black Royal or lemon-lime)"
-});
-
-function legacyGuestEnglishName(value) {
-  return typeof value === "string" && Object.prototype.hasOwnProperty.call(GUEST_ENGLISH_NAMES, value)
-    ? GUEST_ENGLISH_NAMES[value]
-    : value;
-}
-
 /* Flight lookup and passenger-facing dialogs. All data and translations are local. */
 let pendingReadback = null;
 let entryDialogOpener = null;
@@ -1775,13 +1636,13 @@ function requestSeatForward(opener, allowCabin = false) {
   if (!hasItems && !seat.allergy && !seat.cvu && !seat.wake) { move(); return; }
   if (document.getElementById("modalBack").classList.contains("open")) return;
   pendingReadback = { key:flightKey(S), seat:activeSeatId, destination, move };
-  openEntryDialog("readback",opener,`Сверка заказа · ${activeSeatId}`,`<div class="entry-readback-tools"><p class="subtle" id="readbackHint">Повторите заказ гостю перед переходом.</p><button type="button" class="chip" id="btnReadbackEnglish" aria-pressed="false" aria-label="Показать заказ на английском">EN</button></div><div id="readbackItems"></div><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>К заказу</button><button type="button" class="btn primary" id="btnConfirmReadback">${destination ? `Подтвердить → ${esc(destination)}` : "Подтвердить и к салону"}</button></div>`);
-  renderReadback(false);
+  openEntryDialog("readback",opener,`Сверка заказа · ${activeSeatId}`,`<div class="entry-readback-tools"><p class="subtle" id="readbackHint">Повторите заказ гостю перед переходом.</p></div><div id="readbackItems"></div><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>К заказу</button><button type="button" class="btn primary" id="btnConfirmReadback">${destination ? `Подтвердить → ${esc(destination)}` : "Подтвердить и к салону"}</button></div>`);
+  renderReadback();
 }
-function renderReadback(english) {
+function renderReadback() {
   const seat = getSeat(activeSeatId);
-  const label = (ru,en) => english ? en : ru;
-  const name = value => displayName(english ? guestEnglishName(value) : value);
+  const label = ru => ru;
+  const name = value => displayName(value);
   const row = (title,values) => values.length ? `<div><dt>${title}</dt><dd>${values.map(value => esc(name(value))).join(" · ")}</dd></div>` : "";
   const section = (heading,rows) => rows ? `<section class="entry-readback-section"><h3>${heading}</h3><dl>${rows}</dl></section>` : "";
   const courses = (S.spec2Code ? [1,2] : [1]).map(n => {
@@ -1792,11 +1653,11 @@ function renderReadback(english) {
       row(label("Чай / кофе","Tea / coffee"),drinkChoices(c,"t")));
   }).join("");
   const items = document.getElementById("readbackItems");
-  items.lang = english ? "en" : "ru";
+  items.lang = "ru";
   const drinks = drinkChoices(seat,"ap");
   items.innerHTML = (drinks.length ? section(label("Аперитивы","Aperitifs"),row(label("Напитки","Drinks"),drinks)) : "") + courses || `<p class="subtle">${label("Блюда и напитки пока не выбраны.","No food or drinks selected yet.")}</p>`;
   // Free text stays in the original language; never send it for translation.
-  if (seat.allergy || seat.cvu || seat.wake) items.insertAdjacentHTML("beforeend", `<div class="entry-readback-notes" lang="ru">${english ? '<p lang="en" class="subtle">Guest notes below are shown in their original language. Please confirm allergies and requests with the cabin crew.</p>' : ""}${seatSafetyNotice(seat)}${seat.wake && seat.wake !== "Не будить" ? `<div class="seat-request">Режим отдыха: ${esc(seat.wake)}</div>` : ""}</div>`);
+  if (seat.allergy || seat.cvu || seat.wake) items.insertAdjacentHTML("beforeend", `<div class="entry-readback-notes" lang="ru">${seatSafetyNotice(seat)}${seat.wake && seat.wake !== "Не будить" ? `<div class="seat-request">Режим отдыха: ${esc(seat.wake)}</div>` : ""}</div>`);
   const warning = document.createElement("p");
   warning.id = "readbackSaveWarning"; warning.className = "safety-note"; warning.lang = "ru"; warning.setAttribute("role","status");
   items.append(warning);
@@ -1814,20 +1675,18 @@ function guestMenuList(title, values) {
 }
 function openGuestMenu(opener) {
   if (document.getElementById("modalBack").classList.contains("open")) return;
-  openEntryDialog("guest-menu",opener,"Меню",`<div class="guest-menu-languages" role="group" aria-label="Язык меню"><button type="button" data-menu-lang="ru" lang="ru" aria-label="Русский" aria-pressed="true">RU</button><button type="button" data-menu-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button></div><div id="guestMenuScroll" tabindex="0" role="region" aria-labelledby="entryDialogTitle"><div id="guestMenuContent"></div></div>`);
+  openEntryDialog("guest-menu",opener,"Меню",`<div id="guestMenuScroll" tabindex="0" role="region" aria-labelledby="entryDialogTitle"><div id="guestMenuContent"></div></div>`);
   renderGuestMenu("ru");
 }
 function renderGuestMenu(lang) {
   const box = document.getElementById("modalBox");
   const content = document.getElementById("guestMenuContent");
-  const english = lang === "en";
-  const label = (ru,en) => english ? en : ru;
-  const name = value => displayName(english ? guestEnglishName(value) : value);
+  const english = false;
+  const label = ru => ru;
+  const name = value => displayName(value);
   box.lang = lang;
-  box.querySelector("#entryDialogTitle").textContent = label("Меню", "Menu");
-  box.querySelector("[data-close-modal]").setAttribute("aria-label",label("Закрыть меню", "Close menu"));
-  box.querySelector(".guest-menu-languages").setAttribute("aria-label",label("Язык меню", "Menu language"));
-  box.querySelectorAll("[data-menu-lang]").forEach(button => button.setAttribute("aria-pressed",String(button.dataset.menuLang === lang)));
+  box.querySelector("#entryDialogTitle").textContent = "Меню";
+  box.querySelector("[data-close-modal]").setAttribute("aria-label","Закрыть меню");
   const expanded = new Set([...content.querySelectorAll("details[open]")].map(group => group.dataset.menuCategory));
   const menus = (S.spec2Code ? [1,2] : [1]).map(n => {
     const spec = SPECS[S["spec"+n+"Code"]];
@@ -1914,7 +1773,15 @@ function applyManualMealSelection(base, cycle, code) {
 
 function initServiceFlow() {
   const modal = document.getElementById("modalBack");
-  document.getElementById("btnChooseMeal")?.addEventListener("click",e => openManualMealPicker(e.currentTarget));
+  document.getElementById("btnChooseMeal")?.addEventListener("click",e => {
+    const modalBox = document.getElementById("modalBox");
+    if (document.getElementById("modalBack").classList.contains("open") && !modalBox.dataset.entryDialog && typeof restorePhoneTools === "function") {
+      closeModal();
+      requestAnimationFrame(() => openManualMealPicker(document.getElementById("btnChooseMeal")));
+      return;
+    }
+    openManualMealPicker(e.currentTarget);
+  });
   document.getElementById("btnGuestMenu")?.addEventListener("click",e => openGuestMenu(e.currentTarget));
   modal.addEventListener("input",e => { if (e.target.id === "flightNumberQuery") renderFlightSearchResults(); });
   modal.addEventListener("change",e => {
@@ -1936,20 +1803,6 @@ function initServiceFlow() {
   modal.addEventListener("click",e => {
     const match = e.target.closest("[data-flight-match]");
     if (match) { chooseFlightMatch(match.dataset.flightMatch); return; }
-    const menuLanguage = e.target.closest("[data-menu-lang]");
-    if (menuLanguage) {
-      if (menuLanguage.getAttribute("aria-pressed") !== "true") renderGuestMenu(menuLanguage.dataset.menuLang);
-      return;
-    }
-    const language = e.target.closest("#btnReadbackEnglish");
-    if (language) {
-      const english = language.getAttribute("aria-pressed") !== "true";
-      language.setAttribute("aria-pressed",String(english));
-      language.textContent = english ? "RU" : "EN";
-      language.setAttribute("aria-label",english ? "Показать заказ на русском" : "Показать заказ на английском");
-      renderReadback(english);
-      return;
-    }
     if (!e.target.closest("#btnConfirmReadback") || !pendingReadback) return;
     const {key,seat,destination,move} = pendingReadback;
     const ids = getAllSeatIds();
@@ -1960,6 +1813,7 @@ function initServiceFlow() {
   new MutationObserver(refreshReadbackWarning).observe(document.getElementById("saveStatus"),{childList:true,characterData:true,subtree:true});
 }
 
+function legacyGuestEnglishName(value) { return value; }
 /* Swipe feedback is transient; all actions use the existing seat and sheet paths. */
 function initSheetGestures() {
   const sheet = document.getElementById("orderSheet");
@@ -1969,7 +1823,7 @@ function initSheetGestures() {
   const modal = document.getElementById("modalBack");
   const viewport = window.visualViewport;
   let drag = null, pendingFrame = 0;
-  const canDrag = () => phoneLayout.matches && sheet.classList.contains("open") &&
+  const canDrag = () => (phoneLayout.matches || tabletLayout.matches) && sheet.classList.contains("open") &&
     !modal.classList.contains("open") && !document.body.classList.contains("phone-keyboard-open") &&
     (!viewport || viewport.scale <= 1.05);
 
@@ -2056,6 +1910,7 @@ function initSheetGestures() {
   window.addEventListener("blur",cancel);
   viewport?.addEventListener("resize",cancel);
   phoneLayout.addEventListener("change",cancel);
+  tabletLayout.addEventListener("change",cancel);
   document.addEventListener("visibilitychange",cancel);
   // Closing/reopening the sheet or opening a modal must invalidate a held swipe.
   const observer = new MutationObserver(cancel);
@@ -2250,6 +2105,7 @@ function initQuickOrder() {
 
 /* Phone layout is viewport-driven, not user-agent detection: iOS, Android and tablets. */
 const phoneLayout = window.matchMedia("(max-width: 767px), (max-width: 1019px) and (max-height: 500px)");
+const tabletLayout = window.matchMedia("(min-width: 768px) and (max-width: 1024px)");
 let phoneSearchOpen = false;
 let phoneToolHomes = [];
 
@@ -2517,7 +2373,7 @@ function settingsHelpHtml() {
       <details class="settings-guide"><summary>4. Питание, напитки и статусы</summary><p>Во вкладках «Питание 1 / 2» выберите закуску и горячее. Второе питание показывается, только если предусмотрено рейсом. Списки напитков и чая/кофе раскрываются отдельно. Нажатие добавляет напиток, повторное убирает его; можно выбрать несколько разных. Это выбор позиций, а не количество одинаковых порций.</p><p>Статусы независимы по питаниям: принятый заказ, «Позже», «Подано». Не отмечайте подачу заранее. Для изменения уже поданного заказа и добавления блюда сверх остатка требуется подтверждение. Предупреждение о дефиците не подтверждает фактическое наличие.</p></details>
       <details class="settings-guide"><summary>5. Сверка и переход между гостями</summary><p>«Далее» и верхняя стрелка вперёд сначала показывают сверку заполненного заказа. Повторите выбор гостю, затем подтвердите переход или вернитесь к карточке. На последнем кресле подтверждение возвращает к салону; перехода по кругу нет. Верхняя стрелка назад открывает предыдущее кресло.</p><p>На телефоне свайп влево по свободной части шапки вызывает такой же переход со сверкой; вправо — предыдущее кресло. Потяните серую ручку вниз для закрытия. Прокрутка блюд не закрывает карточку. На планшете и ПК используйте кнопки. При уменьшении движения в системе карточка не смещается за пальцем.</p></details>
       <details class="settings-guide"><summary>6. Повторить выбор для следующего кресла</summary><p>При наличии блюд или напитков внизу карточки появляется «Повторить выбор → …». Проверьте список аперитивов и доступных питаний с обоими гостями, затем подтвердите. Откроется следующее кресло на той же вкладке.</p><p>Копируются только блюда и напитки. Имя, обращение, аллергии, пожелания, отдых и статусы исходного гостя не переносятся; собственные данные нового гостя сохраняются. Заполненный заказ не заменяется. При дефиците требуется отдельное подтверждение. Отдельно уточните ограничения и пожелания нового гостя.</p></details>
-      <details class="settings-guide"><summary>7. Меню RU / EN и справочник</summary><p>«Меню» в карточке открывает отдельный экран блюд и напитков для гостя. Там нет имён, номеров кресел, заметок и остатков. RU / EN переключают встроенные названия, без онлайн-перевода. Закрытие возвращает к прежней карточке и прокрутке.</p><p>В сверке заказа EN переводит названия и заголовки, но свободный текст ограничений и пожеланий остаётся в исходном виде. Раздел «Гид» — справочник блюд и напитков, не подтверждённая карта аллергенов.</p></details>
+      <details class="settings-guide"><summary>7. Меню и справочник</summary><p>«Меню» в карточке открывает отдельный экран блюд и напитков для гостя. Там нет имён, номеров кресел, заметок и остатков. Закрытие возвращает к прежней карточке и прокрутке.</p><p>Раздел «Гид» — справочник блюд и напитков, не подтверждённая карта аллергенов.</p></details>
       <details class="settings-guide"><summary>8. Кухня и бланк</summary><p>На «Кухне» блюда и напитки сгруппированы по очередности подачи; проверяйте выбранное питание и статусы. Аперитивы показаны полным списком, отдельного статуса их подачи нет. Во вкладке «Бланк» доступны текстовый экспорт, JSON и печать A4/A5. Печатные и скачанные заказы могут содержать персональные данные: защищайте их по правилам авиакомпании.</p></details>
       <details class="settings-guide"><summary>9. Сохранение, JSON и перенос</summary><p>«Сохранено на устройстве» означает успешную запись в локальное хранилище. «Рейс и данные» → «Копия заказов» скачивает JSON <strong>всех</strong> сохранённых рейсов. Восстановление проверяет файл и после подтверждения <strong>заменяет все рейсы</strong> в этом браузере — перед ним сохраните текущую копию.</p><p>Данные не синхронизируются между телефонами, браузерами или способами запуска. Для переноса используйте JSON. Старые версии не понимают дополнительные напитки и могут потерять их при пересохранении. «Приложение без заказов» — чистый HTML, не копия данных.</p><p class="settings-note">Красная ошибка сохранения: не закрывайте страницу. Скачайте JSON из текущего состояния, затем устраните причину. При конфликте вкладок сохраните копию и перезагрузите данные. Не очищайте хранилище для исправления ошибки.</p></details>
       <details class="settings-guide"><summary>10. Обновление, офлайн и устранение проблем</summary><p>В «Обновление» проверьте наличие версии с интернетом. Красная кнопка появляется, когда новая версия полностью подготовлена. Завершите обслуживание, сохраните JSON, закройте другие вкладки и примените обновление. Перезагрузится только этот экран, заказы не удаляются.</p><p>«Готово к работе без сети» относится к файлам приложения, не к резервной копии заказов. Перед каждым рейсом проверьте запуск с иконки в авиарежиме. Если копия неполна, подключитесь к сети и выполните подготовку. Без заранее подготовленной копии первый запуск без сети невозможен.</p><p>Если кнопки или клавиатура закрывают поля, проверьте поворот и системный масштаб на своём устройстве. При проблеме записи сохраните JSON. Удаление данных сайта, приватный режим или очистка ОС могут привести к потере заказов. Ничего не удаляйте во время обслуживания.</p></details>
