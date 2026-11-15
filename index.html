@@ -59,6 +59,18 @@ h1,h2,h3,h4,p { margin:0; }
 [hidden] { display:none!important; }
 :where(button,input,select,textarea,summary):focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 button,input,textarea,select { transition:background-color .16s,border-color .16s,box-shadow .16s; }
+
+/* Motion never gates input, focus, saving, or closing a dialog. */
+@keyframes save-confirm {
+  0% { transform:scale(.7); opacity:.45; }
+  50% { transform:scale(1.35); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+@keyframes modal-back-in { from { opacity:.8; } to { opacity:1; } }
+@keyframes modal-box-in {
+  from { opacity:.8; transform:translateY(4px); }
+  to { opacity:1; transform:none; }
+}
 .ic { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.65; stroke-linecap:round; stroke-linejoin:round; flex:none; vertical-align:middle; }
 .app { min-height:100dvh; padding-left:92px; }
 .brand-mark { position:fixed; z-index:45; top:24px; left:26px; width:40px; height:40px; color:white; display:grid; place-items:center; }
@@ -96,6 +108,8 @@ button,input,textarea,select { transition:background-color .16s,border-color .16
 .cycle-btn { font-size:11px; color:var(--muted); min-height:30px; width:27px; border-radius:6px; font-weight:600; }
 .cycle-btn.active { color:var(--ink); background:var(--surface); box-shadow:0 1px 5px #0000000d; }
 .save-strip { max-width:1434px; margin:auto; padding:9px 32px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--muted); font-size:11px; }
+#saveStatus[data-save-feedback="a"]::before,
+#saveStatus[data-save-feedback="b"]::before { animation:save-confirm .36s ease-out; }
 #saveStatus::before { content:""; width:5px; height:5px; border-radius:50%; display:inline-block; background:var(--success); margin:0 7px 1px 0; }
 .save-actions { display:flex; align-items:center; gap:18px; }
 .save-actions button { min-height:30px; display:flex; align-items:center; gap:5px; padding:0; font-size:11px; color:var(--ink-2); }
@@ -156,7 +170,8 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 .seat-tile::before { content:""; position:absolute; left:14px; right:14px; top:4px; height:3px; border-radius:3px; background:var(--seat-headrest); }
 .seat-tile::after { content:""; position:absolute; bottom:4px; left:12px; right:12px; height:2px; border-radius:2px; background:var(--seat-headrest); opacity:.5; }
 .seat-tile:hover { border-color:var(--accent); box-shadow:0 3px 12px #172c4010; }
-.seat-tile.active { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+.seat-tile:active { transform:scale(.985); }
+.seat-tile.active { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); animation:seat-select .16s ease-out both; }
 .seat-tile.used { background:var(--status-bg); border-color:var(--status-line); }
 .seat-tile.dnd { background:var(--violet-bg); border-color:var(--violet-line); }
 .seat-tile.served { background:var(--surface-2); border-color:var(--line-strong); }
@@ -256,7 +271,8 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 .galley-groups span { padding:4px 7px; border-radius:6px; background:var(--surface-2); }
 .galley-warning { color:var(--danger); }
 .modal-back { position:fixed; inset:0; z-index:70; background:#28282c70; backdrop-filter:blur(5px); display:none; place-items:center; padding:24px; }
-.modal-back.open { display:grid; }
+.modal-back.open { display:grid; animation:modal-back-in .16s ease-out both; }
+.modal-back.open .modal-box { animation:modal-box-in .18s ease-out both; }
 .modal-box { width:100%; max-width:600px; max-height:88dvh; overflow-y:auto; border-radius:20px; border:1px solid var(--line); background:var(--surface); padding:26px; box-shadow:0 25px 100px #10243640; }
 .modal-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
 .modal-heading h2 { font-size:22px; letter-spacing:-.03em; }
@@ -445,7 +461,7 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   .fuselage[data-columns="7"] .seat-corner-badge { position:absolute; right:1px; top:2px; }
   .fuselage[data-columns="7"] .seat-id { font-size:13px; }
 }
-@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; scroll-behavior:auto!important; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 @media print {
   @page { size:A4 landscape; margin:8mm; }
   html,body { background:#fff!important; color:#000!important; }
@@ -4259,6 +4275,11 @@ function updateSaveStatus() {
   if (!el) return;
   el.textContent = storageProblem || (S.updatedAt ? "✓ Сохранено на устройстве · " + new Date(S.updatedAt).toLocaleTimeString("ru-RU", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "Заказы ещё не сохранены");
   el.parentElement.classList.toggle("save-error", !!storageProblem);
+  if (!storageProblem && S.updatedAt) {
+    el.dataset.saveFeedback = el.dataset.saveFeedback === "a" ? "b" : "a";
+  } else {
+    delete el.dataset.saveFeedback;
+  }
   document.getElementById("btnReload").hidden = !storageConflict;
 }
 function hasCourseOrder(course) { return !!(course.z || course.m || course.zd || course.md || course.t); }
