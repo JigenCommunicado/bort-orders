@@ -606,21 +606,21 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
   html { scroll-padding-top:8px; }
   .app { padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   .topbar { padding:calc(7px + env(safe-area-inset-top)) 12px 7px; }
-  .topbar-inner { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:4px 8px; }
-  .flight-identity { grid-column:1 / -1; grid-row:1; width:auto; flex:none; justify-content:flex-start; min-width:0; gap:10px; }
-  .wordmark { flex:none; padding:10px; }
-  .airline-logo { width:112px; }
+  .topbar-inner { display:grid; grid-template-columns:minmax(0,1fr) auto 44px; gap:4px 8px; align-items:center; }
+  .flight-identity { display:contents; }
+  .wordmark { grid-column:1; grid-row:1; justify-self:start; flex:none; min-width:0; width:min(112px,100%); padding:0; }
+  .airline-logo { width:100%; max-width:112px; }
+  .flight-block { grid-column:1 / -1; grid-row:2; min-width:0; width:100%; }
   .flight-picker > span,#flightSummaryPill { display:none; }
-  .flight-block { flex:1; min-width:0; max-width:none; }
   .flight-picker { display:block; position:relative; }
   .flight-picker::after { content:""; position:absolute; right:4px; top:17px; width:6px; height:6px; border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted); transform:rotate(45deg); pointer-events:none; }
   .flight-sel { display:block; appearance:none; -webkit-appearance:none; background:transparent; border:0; border-radius:0; font-size:16px; font-weight:650; min-height:44px; height:44px; max-width:100%; width:100%; padding-right:20px; text-overflow:ellipsis; }
-  .phone-flight-meta { display:block; font-size:11px; color:var(--muted); line-height:1.5; white-space:nowrap; }
-  .phone-flight-route { display:none; }
-  .phone-menu-button { grid-column:2; grid-row:2; }
-  .topbar .top-actions { display:flex; grid-column:1; grid-row:2; width:auto; flex:none; gap:7px; margin:0; justify-content:flex-end; }
+  .phone-flight-meta { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; font-size:11px; color:var(--muted); line-height:1.5; }
+  .phone-flight-route { display:inline; }
+  .phone-menu-button { grid-column:3; grid-row:1; align-self:center; }
+  .topbar .top-actions { display:flex; grid-column:2; grid-row:1; width:auto; flex:none; gap:7px; margin:0; justify-content:flex-end; align-self:center; }
   .topbar .top-actions > :not(#btnChooseMeal) { display:none; }
-  .topbar .top-actions #btnChooseMeal { display:flex; flex:0 0 auto; min-height:44px; padding:0 10px; font-size:12px; white-space:nowrap; }
+  .topbar .top-actions #btnChooseMeal { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-height:44px; padding:0 10px; font-size:12px; white-space:nowrap; }
   .save-strip .save-actions,.app > .local-notice { display:none; }
   .save-strip { margin:0; padding:3px 14px 0; font-size:10px; min-height:20px; gap:4px; }
   #saveStatus { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -725,19 +725,17 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 }
 @media(max-width:479px) {
   .phone-flight-meta { font-size:10px; }
-  .phone-flight-route { display:block; }
+  .phone-flight-route { display:inline; }
   .phone-flight-count { display:none; }
 }
 @media(max-width:359px) {
-  .topbar-inner { display:grid; grid-template-columns:minmax(0,1fr) 44px 44px; gap:2px 8px; }
-  .flight-identity { display:contents; }
+  .topbar-inner { display:grid; grid-template-columns:minmax(0,1fr) auto 44px; gap:2px 5px; }
   .wordmark { grid-column:1; grid-row:1; justify-self:start; }
-  #btnFindFlight { grid-column:2; grid-row:1; }
+  .topbar .top-actions { grid-column:2; grid-row:1; justify-content:flex-end; }
   #btnPhoneMenu { grid-column:3; grid-row:1; }
-  .topbar .top-actions { grid-column:1 / -1; grid-row:3; justify-content:flex-end; }
   .flight-block { grid-column:1 / -1; grid-row:2; display:flex; align-items:center; justify-content:space-between; gap:6px; }
   .phone-flight-meta { flex:none; }
-  .phone-flight-route { display:none; }
+  .phone-flight-route { display:inline; }
   .flight-sel { font-size:16px; }
   .workspace { padding-left:10px; padding-right:10px; }
   .cabin-tools .chip { padding-left:7px; padding-right:7px; }
@@ -874,11 +872,36 @@ h1 { font-size:32px; font-weight:650; line-height:1.2; letter-spacing:-.045em; }
 .manual-meal-hint { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 .manual-meal-note { margin:0 0 10px; color:var(--ink-2); font-size:14px; }
 #manualMealForm { display:grid; gap:12px; min-width:0; }
-#manualMealForm .field-group { display:grid; gap:5px; min-width:0; overflow:hidden; }
+.manual-meal-picker { display:grid; gap:16px; }
+.manual-meal-group { display:grid; gap:7px; min-width:0; }
+.manual-meal-label { color:var(--secondary); font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.manual-meal-label-row { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.manual-meal-choices { display:flex; flex-wrap:wrap; gap:8px; }
+.manual-meal-choice { min-width:54px; min-height:44px; padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font-size:15px; font-weight:750; }
+.manual-meal-choice[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-tint); color:var(--accent); box-shadow:0 0 0 2px var(--accent-tint); }
+.manual-meal-choice:disabled { opacity:.38; cursor:not-allowed; }
+.manual-meal-code-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.manual-meal-code { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; min-height:54px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); text-align:left; }
+.manual-meal-code strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+.manual-meal-code-info { color:var(--muted); font-size:15px; }
+.manual-meal-code[aria-pressed="true"] { border:2px solid var(--accent); padding:9px 11px; background:var(--accent-tint); color:var(--accent); }
+.manual-meal-empty { margin:0; padding:12px; border:1px dashed var(--line-strong); border-radius:10px; }
+.manual-meal-summary { margin:0; min-height:22px; padding:9px 11px; border-radius:9px; background:var(--surface-2); color:var(--secondary); font-weight:750; }
+.manual-meal-details { border-top:1px solid var(--line); padding-top:9px; }
+.manual-meal-details summary { cursor:pointer; color:var(--secondary); font-size:12px; font-weight:700; }
+.manual-meal-details .safety-note { margin:8px 0 0; }
 #manualMealForm .entry-dialog-actions { margin-top:4px; }
 @media(max-width:767px), (max-width:1019px) and (max-height:500px) {
   .manual-meal-trigger { flex:1; min-width:0; }
   .manual-meal-hint { display:none; }
+  #modalBox[data-entry-dialog="manual-meal"] { padding:18px 14px; }
+  .manual-meal-code-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .manual-meal-code { min-height:52px; padding-inline:10px; }
+  .manual-meal-code[aria-pressed="true"] { padding-inline:9px; }
+}
+@media(max-width:359px) {
+  .manual-meal-code strong { font-size:14px; }
+  .manual-meal-choice { min-width:48px; padding-inline:11px; }
 }
 
 /* Compact controls and scrollable dialogs for the order hand-off. */
@@ -1720,32 +1743,50 @@ function manualMealOptions(base, cycle) {
 function manualMealCurrentBase() {
   return SPECS[S.spec1Code]?.source?.base || "SVO";
 }
+function manualMealCycles(base) {
+  return [1,2,3,4].filter(cycle => manualMealOptions(base, cycle).length);
+}
 function renderManualMealOptions() {
-  const base = document.getElementById("manualMealBase")?.value;
-  const cycle = Number(document.getElementById("manualMealCycle")?.value);
-  const select = document.getElementById("manualMealCode");
-  if (!select) return;
+  const form = document.getElementById("manualMealForm");
+  const codeGrid = document.getElementById("manualMealCodeGrid");
+  if (!form || !codeGrid) return;
+  const base = form.dataset.base || "";
+  const cycles = manualMealCycles(base);
+  let cycle = Number(form.dataset.cycle) || 1;
+  if (!cycles.includes(cycle)) cycle = cycles[0] || 1;
+  form.dataset.cycle = String(cycle);
   const options = manualMealOptions(base, cycle);
-  const current = options.includes(S.spec1Code) ? S.spec1Code : "";
-  select.innerHTML = `<option value="">Выберите код рациона</option>` + options.map(key => {
+  const current = options.includes(form.dataset.code) ? form.dataset.code : "";
+  form.dataset.code = current;
+  document.querySelectorAll("[data-manual-base]").forEach(button => {
+    const selected = button.dataset.manualBase === base;
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  const cycleRow = document.getElementById("manualMealCycle");
+  if (cycleRow) cycleRow.innerHTML = [1,2,3,4].map(value => `<button type="button" class="manual-meal-choice" data-manual-cycle="${value}" aria-pressed="${value === cycle}"${manualMealOptions(base, value).length ? "" : " disabled"}>${value}</button>`).join("");
+  codeGrid.innerHTML = options.length ? options.map(key => {
     const spec = SPECS[key];
-    return `<option value="${esc(key)}"${key === current ? " selected" : ""}>${esc(spec.displayCode || key)} — ${esc(spec.title)}</option>`;
-  }).join("");
+    const display = spec.displayCode || key;
+    return `<button type="button" class="manual-meal-code" data-manual-code="${esc(key)}" aria-pressed="${key === current}" title="${esc(spec.title || display)}"><strong>${esc(display)}</strong><span class="manual-meal-code-info">ⓘ</span></button>`;
+  }).join("") : `<p class="subtle manual-meal-empty">Для этой базы и цикла кодов нет.</p>`;
   const status = document.getElementById("manualMealStatus");
-  if (status) status.textContent = options.length ? `Доступно кодов: ${options.length}` : "Для этой базы и цикла подтверждённый основной рацион не найден.";
+  if (status) status.textContent = options.length ? `${options.length} код${options.length === 1 ? "" : options.length < 5 ? "а" : "ов"}` : "Выберите другой цикл.";
+  const summary = document.getElementById("manualMealSummary");
+  if (summary) summary.textContent = `${base || "—"} · Цикл ${cycle}${current ? ` · ${SPECS[current].displayCode || current}` : ""}`;
 }
 function openManualMealPicker(opener) {
   const bases = manualMealBases();
   const base = bases.includes(manualMealCurrentBase()) ? manualMealCurrentBase() : (bases[0] || "");
   const cycle = Number(S.cycle) || 1;
-  openEntryDialog("manual-meal", opener, "Выбрать рацион", `<form id="manualMealForm">
-    <p class="manual-meal-note">Сначала выберите базу питания, затем ручной цикл и код рациона.</p>
-    <p class="safety-note">Аэропорт вылета и база загрузки могут отличаться. Проверьте фактическую загрузку.</p>
-    <label class="field-group"><span class="field-label">Аэропорт вылета / база питания</span><select class="in" id="manualMealBase" data-modal-focus>${bases.map(value => `<option value="${esc(value)}"${value === base ? " selected" : ""}>${esc(value)}</option>`).join("")}</select></label>
-    <label class="field-group"><span class="field-label">Цикл</span><select class="in" id="manualMealCycle">${[1,2,3,4].map(value => `<option value="${value}"${value === cycle ? " selected" : ""}>Цикл ${value}</option>`).join("")}</select></label>
-    <label class="field-group"><span class="field-label">Код рациона · питание 1</span><select class="in" id="manualMealCode" required><option value="">Выберите код рациона</option></select></label>
-    <p class="subtle" id="manualMealStatus" role="status"></p>
-    <div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>Отмена</button><button type="submit" class="btn primary">Применить рацион</button></div>
+  openEntryDialog("manual-meal", opener, "Выбрать рацион", `<form id="manualMealForm" data-base="${esc(base)}" data-cycle="${cycle}" data-code="">
+    <div class="manual-meal-picker">
+      <div class="manual-meal-group"><span class="manual-meal-label">Вылет</span><div class="manual-meal-choices manual-meal-bases">${bases.map(value => `<button type="button" class="manual-meal-choice" data-manual-base="${esc(value)}" aria-pressed="${value === base}">${esc(value)}</button>`).join("")}</div></div>
+      <div class="manual-meal-group"><span class="manual-meal-label">Цикл</span><div class="manual-meal-choices" id="manualMealCycle"></div></div>
+      <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">Код рациона</span><span class="subtle" id="manualMealStatus" role="status"></span></div><div class="manual-meal-code-grid" id="manualMealCodeGrid"></div></div>
+      <p class="manual-meal-summary" id="manualMealSummary" aria-live="polite"></p>
+      <details class="manual-meal-details"><summary>Проверка загрузки</summary><p class="safety-note">Аэропорт вылета и база загрузки могут отличаться. Проверьте фактическую загрузку.</p></details>
+    </div>
+    <div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>Отмена</button><button type="submit" class="btn primary">Применить</button></div>
   </form>`);
   renderManualMealOptions();
 }
@@ -1787,13 +1828,11 @@ function initServiceFlow() {
   });
   document.getElementById("btnGuestMenu")?.addEventListener("click",e => openGuestMenu(e.currentTarget));
   modal.addEventListener("input",e => { if (e.target.id === "flightNumberQuery") renderFlightSearchResults(); });
-  modal.addEventListener("change",e => {
-    if (e.target.id === "manualMealBase" || e.target.id === "manualMealCycle") renderManualMealOptions();
-  });
   modal.addEventListener("submit",e => {
     if (e.target.id === "manualMealForm") {
       e.preventDefault();
-      applyManualMealSelection(document.getElementById("manualMealBase").value,Number(document.getElementById("manualMealCycle").value),document.getElementById("manualMealCode").value);
+      const form = e.target;
+      applyManualMealSelection(form.dataset.base,Number(form.dataset.cycle),form.dataset.code);
       return;
     }
     if (e.target.id !== "flightNumberForm") return;
@@ -1804,6 +1843,24 @@ function initServiceFlow() {
     if (match) chooseFlightMatch(match.no);
   });
   modal.addEventListener("click",e => {
+    const baseButton = e.target.closest("[data-manual-base]");
+    if (baseButton) {
+      const form = document.getElementById("manualMealForm");
+      if (form) { form.dataset.base = baseButton.dataset.manualBase; form.dataset.code = ""; renderManualMealOptions(); }
+      return;
+    }
+    const cycleButton = e.target.closest("[data-manual-cycle]");
+    if (cycleButton && !cycleButton.disabled) {
+      const form = document.getElementById("manualMealForm");
+      if (form) { form.dataset.cycle = cycleButton.dataset.manualCycle; form.dataset.code = ""; renderManualMealOptions(); }
+      return;
+    }
+    const codeButton = e.target.closest("[data-manual-code]");
+    if (codeButton) {
+      const form = document.getElementById("manualMealForm");
+      if (form) { form.dataset.code = codeButton.dataset.manualCode; renderManualMealOptions(); }
+      return;
+    }
     const match = e.target.closest("[data-flight-match]");
     if (match) { chooseFlightMatch(match.dataset.flightMatch); return; }
     if (!e.target.closest("#btnConfirmReadback") || !pendingReadback) return;
