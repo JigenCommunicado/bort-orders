@@ -1843,7 +1843,7 @@ function renderManualMealOptions() {
   if (!cycles.includes(cycle)) cycle = cycles[0] || 1;
   form.dataset.cycle = String(cycle);
   const options = manualMealOptions(base, cycle);
-  const current = options.includes(form.dataset.code) ? form.dataset.code : "";
+  const current = options.includes(form.dataset.code) ? form.dataset.code : (options.find(key => (SPECS[key].displayCode || key) === form.dataset.code) || "");
   form.dataset.code = current;
   const preset = CABIN_PRESETS[form.dataset.preset] ? form.dataset.preset : S.presetKey;
   form.dataset.preset = preset;
@@ -1863,26 +1863,36 @@ function renderManualMealOptions() {
   }).join("") : `<p class="subtle manual-meal-empty">Для этой базы и цикла кодов нет.</p>`;
   const status = document.getElementById("manualMealStatus");
   if (status) status.textContent = options.length ? `${options.length} код${options.length === 1 ? "" : options.length < 5 ? "а" : "ов"}` : "Выберите другой цикл.";
+  const second = form.elements.manualMealSecond;
+  const selected = options.includes(second.value) ? second.value : (form.dataset.initialSecond || '');
+  second.innerHTML = '<option value="">Без второго питания</option>' + options.map(key => `<option value="${esc(key)}">${esc((SPECS[key].displayCode || key) + ' — ' + SPECS[key].title)}</option>`).join('');
+  second.value = options.includes(selected) ? selected : '';
+  form.elements.manualMealEnableSecond.checked = !!second.value;
   renderManualMealSummary();
-  const apply = document.getElementById("manualMealApply");
-  if (apply) apply.disabled = !current;
 }
 function renderManualMealSummary() {
   const form = document.getElementById("manualMealForm");
   if (!form) return;
   const {base,preset,cycle,code} = form.dataset;
+  const enabled = form.elements.manualMealEnableSecond.checked;
+  const second = form.elements.manualMealSecond;
+  second.hidden = !enabled; second.disabled = !enabled; second.required = false;
+  document.getElementById('manualMealApply').disabled = !code;
+  const secondLabel = enabled ? ` · Питание 2: ${SPECS[second.value]?.displayCode || second.value || 'не выбрано'}` : '';
   const quantity = document.getElementById("manualMealRations");
   const selectedPreset = CABIN_PRESETS[preset];
   const defaultRations = preset === S.presetKey ? S.rations : selectedPreset?.rations;
   if (quantity) quantity.placeholder = `По умолчанию: ${defaultRations || "—"}`;
   const summary = document.getElementById("manualMealSummary");
-  if (summary) summary.textContent = `${base || "База не выбрана"} · ${selectedPreset?.name || "Компоновка не выбрана"} · Цикл ${cycle}${code ? ` · ${SPECS[code].displayCode || code}` : " · код не выбран"} · ${quantity?.value || defaultRations} рационов`;
+  if (summary) summary.textContent = `${base || "База не выбрана"} · ${selectedPreset?.name || "Компоновка не выбрана"} · Цикл ${cycle}${code ? ` · ${SPECS[code].displayCode || code}` : " · код не выбран"} · ${quantity?.value || defaultRations} рационов${secondLabel}`;
 }
 function openManualMealPicker(opener) {
   const bases = manualMealBases();
   const base = bases.includes(manualMealCurrentBase()) ? manualMealCurrentBase() : (bases[0] || "");
   const cycle = Number(S.cycle) || 1;
-  openEntryDialog("manual-meal", opener, "Настройка рациона", `<form id="manualMealForm" data-base="${esc(base)}" data-cycle="${cycle}" data-code="" data-preset="${esc(S.presetKey)}">
+  const options = manualMealOptions(base,cycle);
+  const existingSecond = options.includes(S.spec2Code) ? S.spec2Code : '';
+  openEntryDialog("manual-meal", opener, "Настройка рациона", `<form id="manualMealForm" data-base="${esc(base)}" data-cycle="${cycle}" data-code="${esc(options.includes(S.spec1Code) ? S.spec1Code : options.includes(`${base}:${S.spec1Code}`) ? `${base}:${S.spec1Code}` : "")}" data-initial-second="${esc(existingSecond)}" data-preset="${esc(S.presetKey)}">
     <div class="manual-meal-picker">
       <div class="manual-meal-intro"><span class="manual-meal-kicker">ПОДГОТОВКА ПИТАНИЯ</span><h3>Выберите рацион</h3><p>Вылет, тип ВС и компоновка, цикл, код и загрузка — без привязки к номеру рейса.</p></div>
       <ol class="manual-meal-steps" aria-label="Шаги выбора рациона"><li><b>1</b><span>Вылет</span></li><li><b>2</b><span>Тип ВС</span></li><li><b>3</b><span>Цикл</span></li><li><b>4</b><span>Код</span></li><li><b>5</b><span>Загрузка</span></li></ol>
@@ -1891,6 +1901,7 @@ function openManualMealPicker(opener) {
       <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">3 · Цикл меню</span><span class="subtle" id="manualMealCycleStatus"></span></div><div class="manual-meal-choices" id="manualMealCycle"></div></div>
       <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">4 · Код рациона</span><span class="subtle" id="manualMealStatus" role="status"></span></div><div class="manual-meal-code-grid" id="manualMealCodeGrid"></div></div>
       <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">5 · Загружено рационов</span><span class="subtle">при необходимости</span></div><input class="in" type="number" id="manualMealRations" min="1" max="60" inputmode="numeric" placeholder="Например, 18" aria-label="Количество загруженного питания"></div>
+      <div class="manual-meal-group"><label class="second-meal-toggle"><input type="checkbox" name="manualMealEnableSecond"${existingSecond ? ' checked' : ''}> Добавить 2-е питание</label><select class="in" name="manualMealSecond" aria-label="Второй рацион" hidden></select></div>
       <p class="manual-meal-summary" id="manualMealSummary" aria-live="polite"></p>
       <details class="manual-meal-details"><summary>Проверка базы загрузки</summary><p class="safety-note">Аэропорт вылета и база загрузки могут отличаться. Проверьте фактическую загрузку.</p></details>
     </div>
@@ -1898,7 +1909,7 @@ function openManualMealPicker(opener) {
   </form>`);
   renderManualMealOptions();
 }
-function applyManualMealSelection(base, cycle, code, presetKey, rationValue) {
+function applyManualMealSelection(base, cycle, code, presetKey, rationValue, secondCode) {
   const spec = SPECS[code];
   const preset = CABIN_PRESETS[presetKey];
   const rations = String(rationValue ?? "").trim() ? Number(rationValue) : (presetKey === S.presetKey ? Number(S.rations) : preset?.rations);
@@ -1909,15 +1920,20 @@ function applyManualMealSelection(base, cycle, code, presetKey, rationValue) {
   if (!spec || !isMeal || spec.source?.base !== base || spec.cycle !== Number(cycle) || spec.source?.conflict || isAncillaryMenu(spec) || spec.source?.effectiveFrom > today() || code.includes(":UNAVAILABLE.")) {
     toast("Выберите подтверждённый основной рацион этой базы и цикла."); return;
   }
+  if (`${base}:${S.spec1Code}` === code && SPECS[S.spec1Code]?.cycle === Number(cycle)) code = S.spec1Code;
   const menuChanged = code !== S.spec1Code || Number(cycle) !== Number(S.cycle);
   const presetChanged = presetKey !== S.presetKey;
   const quantityChanged = rations !== Number(S.rations);
-  const secondBase = SPECS[S.spec2Code]?.source?.base || "SVO";
-  const secondCycle = SPECS[S.spec2Code]?.cycle;
-  const secondInvalid = !!S.spec2Code && (secondBase !== base || secondCycle !== Number(cycle));
-  if (!menuChanged && !secondInvalid && !presetChanged && !quantityChanged && !S.schedule && S.manualSetup) { closeModal(); return; }
-  const warning = `${presetChanged ? " Компоновка салона будет заменена." : ""}${quantityChanged ? " Количество загрузки будет обновлено." : ""}${secondInvalid ? " Второй рацион другой базы или цикла будет снят." : ""}`;
-  if (!confirm(`Применить ${spec.displayCode || code} (${base}, ${preset.name}, цикл ${cycle}, ${rations} рационов)?${menuChanged ? " Заказы питания будут сброшены; имена, аперитивы, аллергии и пожелания останутся." : " Заказы и данные гостей сохранятся."}${warning}`)) return;
+  const validSeconds = manualMealOptions(base,cycle);
+  const qualifiedSecond = validSeconds.includes(S.spec2Code) ? S.spec2Code : `${base}:${S.spec2Code}`;
+  if (secondCode === undefined) secondCode = validSeconds.includes(qualifiedSecond) ? qualifiedSecond : '';
+  if (secondCode && !validSeconds.includes(secondCode)) { toast('Выберите второй рацион этой базы и цикла.'); return; }
+  // Старый и квалифицированный коды одного рациона не требуют сброса заказов.
+  if (secondCode && secondCode === qualifiedSecond && S.spec2Code && !S.spec2Code.includes(':')) secondCode = S.spec2Code;
+  const secondChanged = secondCode !== S.spec2Code;
+  if (!menuChanged && !secondChanged && !presetChanged && !quantityChanged && !S.schedule && S.manualSetup) { closeModal(); return; }
+  const warning = `${presetChanged ? " Компоновка салона будет заменена." : ""}${quantityChanged ? " Количество загрузки будет обновлено." : ""}${menuChanged ? " Заказы первого питания будут сброшены." : " Заказы первого питания сохранятся."}${secondChanged && S.spec2Code ? " Заказы второго питания будут сброшены." : ""}`;
+  if (!confirm(`Применить ${spec.displayCode || code}${secondCode ? ' и ' + (SPECS[secondCode].displayCode || secondCode) : ''} (${base}, ${preset.name}, цикл ${cycle}, ${rations} рационов)?${warning} Данные гостей сохранятся.`)) return;
   const before = clone(S);
   const p = presetChanged ? preset : S.layout;
   const newIds = [];
@@ -1929,12 +1945,14 @@ function applyManualMealSelection(base, cycle, code, presetKey, rationValue) {
   S.presetKey = presetKey;
   S.rations = rations;
   S.layout = {from:p.from, to:p.to, letters:p.letters, aisles:p.aisles.slice()};
-  if (secondInvalid) S.spec2Code = "";
-  if (menuChanged) clearCourses();
-  else if (secondInvalid) for (const seat of Object.values(S.seats)) seat.s2 = blankSeat().s2;
+  S.spec2Code = secondCode;
+  for (const seat of Object.values(S.seats)) {
+    if (menuChanged) seat.s1 = blankSeat().s1;
+    if (secondChanged) seat.s2 = blankSeat().s2;
+  }
   for (const id of removed) delete S.seats[id];
-  if (menuChanged) S.stock = {};
-  else if (secondInvalid) delete S.stock.s2;
+  if (menuChanged) delete S.stock.s1;
+  if (secondChanged) delete S.stock.s2;
   // A manual specification is not a document-confirmed schedule variant.
   delete S.schedule;
   S.manualSetup = true;
@@ -1962,6 +1980,7 @@ function initServiceFlow() {
     if (e.target.id === "manualMealRations") renderManualMealSummary();
   });
   modal.addEventListener("change",e => {
+    if (["manualMealEnableSecond","manualMealSecond"].includes(e.target.name)) renderManualMealSummary();
     if (e.target.id === "manualMealPreset") {
       const form = document.getElementById("manualMealForm");
       if (form) { form.dataset.preset = e.target.value; renderManualMealSummary(); }
@@ -1972,7 +1991,8 @@ function initServiceFlow() {
     if (e.target.id === "manualMealForm") {
       e.preventDefault();
       const form = e.target;
-      applyManualMealSelection(form.dataset.base,Number(form.dataset.cycle),form.dataset.code,form.dataset.preset,document.getElementById("manualMealRations")?.value);
+      if (document.getElementById("manualMealApply").disabled) return;
+      applyManualMealSelection(form.dataset.base,Number(form.dataset.cycle),form.dataset.code,form.dataset.preset,document.getElementById("manualMealRations")?.value,form.elements.manualMealEnableSecond.checked ? form.elements.manualMealSecond.value : "");
       return;
     }
     if (e.target.id !== "flightNumberForm") return;
@@ -2001,8 +2021,8 @@ function initServiceFlow() {
       if (form) {
         form.dataset.code = codeButton.dataset.manualCode;
         form.querySelectorAll("[data-manual-code]").forEach(button => button.setAttribute("aria-pressed",String(button === codeButton)));
-        document.getElementById("manualMealApply").disabled = false;
         renderManualMealSummary();
+        document.getElementById("manualMealApply").disabled = false;
       }
       return;
     }
@@ -2159,7 +2179,7 @@ function handlePairCabinClick(event) {
 }
 function openPairOrder(opener, ids) {
   if (document.getElementById('modalBack').classList.contains('open') || ids.length !== 2 || new Set(ids).size !== 2 || !ids.every(id => getAllSeatIds().includes(id))) return;
-  pairOrder = {ids:[...ids], snapshot:JSON.stringify(S), draft:Object.fromEntries(ids.map(id => [id, clone(S.seats[id] || blankSeat())])), focusId:ids[0], step:'guest', review:false, dirty:false, views:{}, message:''};
+  pairOrder = {ids:[...ids], snapshot:JSON.stringify(S), draft:Object.fromEntries(ids.map(id => [id, clone(S.seats[id] || blankSeat())])), focusId:ids[0], step:'guest', review:false, checked:new Set(), dirty:false, views:{}, message:''};
   openEntryDialog('pair',opener,'Обслужить вместе','<div id="pairWorkspace"></div>');
   renderPairOrder();
 }
@@ -2179,7 +2199,7 @@ function pairGuestFields(seat) {
 }
 function pairReadback(seat, id) {
   const hasOrder = drinkChoices(seat,'ap').length || hasCourseOrder(seat.s1) || (S.spec2Code && hasCourseOrder(seat.s2));
-  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n])}</p>`).join('')}${seatSafetyNotice(seat)}<button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
+  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n])}</p>`).join('')}${seatSafetyNotice(seat)}<button type="button" class="chip${pairOrder.checked.has(id) ? ' on' : ''}" data-pair-check="${esc(id)}" aria-pressed="${pairOrder.checked.has(id)}">${pairOrder.checked.has(id) ? '✓ Сверено' : 'Отметить сверку'} · ${esc(id)}</button> <button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
 }
 function renderPairOrder() {
   const p = pairOrder, root = document.getElementById('pairWorkspace');
@@ -2188,14 +2208,14 @@ function renderPairOrder() {
   const steps = [['guest','Гость и аперитивы'],['s1','Питание 1'],...(S.spec2Code ? [['s2','Питание 2']] : [])];
   root.innerHTML = `<p class="subtle">${p.review ? 'Сверьте оба заказа отдельно. Данные сохранятся на этом устройстве.' : 'Два отдельных черновика. Изменения сохранятся после общей сверки.'}</p>${p.review ? '' : `<div class="chips pair-steps" role="group" aria-label="Этап обслуживания">${steps.map(([key,label]) => `<button type="button" class="chip${p.step === key ? ' on' : ''}" data-pair-step="${key}" aria-pressed="${p.step === key}">${label}</button>`).join('')}</div><div class="chips pair-switch" role="group" aria-label="Карточка гостя">${p.ids.map(id => `<button type="button" class="chip${p.focusId === id ? ' on' : ''}" data-pair-focus="${esc(id)}" aria-pressed="${p.focusId === id}">Кресло ${esc(id)}</button>`).join('')}</div>`}<div class="pair-grid${p.review ? ' pair-review' : ''}">${p.ids.map(id => {
     const seat = p.draft[id];
-    return `<section class="pair-pane${p.focusId === id ? ' pair-current' : ''}" data-pair-pane="${esc(id)}" aria-label="Кресло ${esc(id)}"><h3>Кресло ${esc(id)}${seat.name ? ` · ${esc(seat.name)}` : ''}</h3>${p.review ? pairReadback(seat,id) : withPairSeat(id, () => p.step === 'guest' ? pairGuestFields(seat) : renderCourseStep(Number(p.step[1])))}</section>`;
-  }).join('')}</div><p class="safety-note" role="status" ${p.message ? '' : 'hidden'}>${esc(p.message)}</p><div class="entry-dialog-actions"><button type="button" class="btn" ${p.review ? 'data-pair-back' : 'data-close-modal'}>${p.review ? 'К редактированию' : 'Отмена'}</button><button type="button" class="btn primary" ${p.review ? 'data-pair-save' : 'data-pair-review'}>${p.review ? `Сохранить ${esc(p.ids.join(' и '))}` : 'Сверить оба заказа'}</button></div>`;
+    return `<section class="pair-pane${p.focusId === id ? ' pair-current' : ''}" data-pair-pane="${esc(id)}" aria-label="Кресло ${esc(id)}"><h3>Кресло ${esc(id)}${seat.name ? ` · ${esc(seat.name)}` : ''}</h3><div data-pair-progress>${renderSeatProgress(seat)}</div>${p.review ? pairReadback(seat,id) : withPairSeat(id, () => p.step === 'guest' ? pairGuestFields(seat) : renderCourseStep(Number(p.step[1])))}</section>`;
+  }).join('')}</div><p class="safety-note" role="status" ${p.message ? '' : 'hidden'}>${esc(p.message)}</p><div class="entry-dialog-actions"><button type="button" class="btn" ${p.review ? 'data-pair-back' : 'data-close-modal'}>${p.review ? 'К редактированию' : 'Отмена'}</button><button type="button" class="btn primary" ${p.review ? 'data-pair-save' : 'data-pair-review'} ${p.review && p.checked.size !== p.ids.length ? 'disabled' : ''}>${p.review ? `Сохранить ${esc(p.ids.join(' и '))}` : 'Сверить оба заказа'}</button></div>`;
   root.querySelectorAll('[data-pair-pane]').forEach(pane => pane.querySelectorAll('details[data-order-extra]').forEach(el => { el.open = !!open.get(pane.dataset.pairPane)?.includes(el.dataset.orderExtra); }));
   root.querySelectorAll('[data-path],[data-dcat]').forEach(btn => btn.setAttribute('aria-pressed',String(btn.matches('.on,.active'))));
 }
 function savePairOrder() {
   const p = pairOrder;
-  if (!p?.review) return;
+  if (!p?.review || p.checked.size !== p.ids.length) return;
   if (storageConflict || JSON.stringify(S) !== p.snapshot) {
     p.message = 'Текущие данные изменились. Эти черновики не могут заменить сохранённые заказы.';
     renderPairOrder(); return;
@@ -2214,7 +2234,8 @@ function initTogetherOrder() {
     const field = event.target.dataset.pairField;
     const id = event.target.closest('[data-pair-pane]')?.dataset.pairPane;
     if (!pairOrder?.draft[id] || !['name','allergy','cvu'].includes(field)) return;
-    pairOrder.draft[id][field] = event.target.value; pairOrder.dirty = true;
+    pairOrder.draft[id][field] = event.target.value; pairOrder.dirty = true; pairOrder.checked.clear();
+    event.target.closest("[data-pair-pane]").querySelector("[data-pair-progress]").innerHTML = renderSeatProgress(pairOrder.draft[id]);
     if (field === 'name') event.target.closest('[data-pair-pane]').querySelector('h3').textContent = 'Кресло ' + id + (event.target.value ? ' · '+event.target.value : '');
   });
   pairBox().addEventListener('click',event => {
@@ -2222,10 +2243,12 @@ function initTogetherOrder() {
     if (!p || !button || button.disabled) return;
     const data = button.dataset, id = button.closest('[data-pair-pane]')?.dataset.pairPane;
     if ('pairSave' in data) { savePairOrder(); return; }
-    if ('pairReview' in data || 'pairBack' in data || data.pairEdit) { p.review = 'pairReview' in data; if (data.pairEdit) p.focusId = data.pairEdit; }
+    if (data.pairCheck && p.review) { if (p.checked.has(id)) p.checked.delete(id); else p.checked.add(id); }
+    else if ('pairReview' in data || 'pairBack' in data || data.pairEdit) { p.review = 'pairReview' in data; if (data.pairEdit) p.focusId = data.pairEdit; }
     else if (data.pairFocus) p.focusId = data.pairFocus;
     else if (data.pairStep) p.step = data.pairStep;
     else if (id && !p.review) {
+      p.checked.clear();
       const seat = p.draft[id];
       if (data.teaAddon) p.dirty = toggleTeaAddon(seat[p.step],data.teaAddon) || p.dirty;
       else if (data.path) p.dirty = withPairSeat(id,() => applyOrderChoice(data.path,data.val)) || p.dirty;
@@ -2265,7 +2288,7 @@ function captureOrderEntryView() {
   const box = document.getElementById("sheetContent");
   if (orderEntryViewKey !== orderEntryKey()) return null;
   const focused = document.activeElement;
-  const attrs = ["id","data-path","data-val","data-dcat","data-drink-target","data-course-status","data-dish-info","data-add-cvu","data-go-step"];
+  const attrs = ["id","data-path","data-val","data-dcat","data-drink-target","data-course-status","data-dish-info","data-add-cvu","data-go-step","data-tea-addon"];
   const focusAttrs = focused && document.getElementById("orderSheet").contains(focused)
     ? attrs.filter(a => focused.hasAttribute(a)).map(a => [a, focused.getAttribute(a)]) : [];
   const summary = focused?.matches("summary") ? focused.parentElement.dataset.orderExtra : null;
@@ -2307,6 +2330,7 @@ function finishOrderEntryView(view) {
   const selected = course && [course.z && ("Зак: " + displayName(course.z)),course.m && ("Гор: " + displayName(course.m))].filter(Boolean).join(" · ");
   context.innerHTML = `<div class="pos-summary-head"><strong>${esc(currentLabel)}</strong><span>${index + 1} из ${ids.length}</span></div><div class="pos-summary-main"><span class="pos-summary-guest">${esc(guestLabel)}</span>${guestFlags.length ? `<span class="pos-summary-flags">${esc(guestFlags.join(" · "))}</span>` : ""}</div><div class="pos-service-states">${serviceRows}</div>${activeStep !== "guest" ? `<div class="pos-summary-selection"><span>Выбрано</span><strong>${esc(selected || "Блюда пока не выбраны")}</strong></div>` : ""}`;
   summary.append(context);
+  summary.insertAdjacentHTML("beforeend", `<div id="soloProgress">${renderSeatProgress(seat)}</div>`);
   const warning = document.createElement("p"); warning.id = "sheetSaveWarning"; warning.setAttribute("role","status");
   summary.append(warning); refreshSheetSaveWarning();
   if (view) {
@@ -3792,10 +3816,7 @@ function renderCourseStep(svcNum) {
         <span>Чай / Кофе</span>
         <span style="color:var(--gold); text-transform:none;">${esc(sp.dessert)}</span>
       </div>
-      <div class="chips">
-        <p class="subtle drink-multi-hint">Можно выбрать несколько.</p>${TEA_LIST.map(t => `<button type="button" class="chip${drinkChoices(sv,"t").includes(t) ? " on" : ""}" data-path="${prefix}t" data-val="${esc(t)}">${esc(displayName(t))}</button>`).join("")}
-      </div>
-    </div><div class="field-label">Добавки</div><div class="chips">${TEA_ADDONS.map(a => `<button type="button" class="chip${(sv.tAddons || []).includes(a) ? " on" : ""}" data-tea-addon="${esc(a)}" aria-pressed="${(sv.tAddons || []).includes(a)}" ${sv.t ? "" : "disabled"}>${esc(a)}</button>`).join("")}</div>
+      ${renderHotDrinkOptions(sv, prefix)}
     </div>
     </details>
     ${renderServiceStatus(svcNum, sv)}
@@ -4030,19 +4051,23 @@ function viewCleanGalley() {
         return `<div class="galley-row"><div class="galley-row-top"><strong>${esc(dish.short)}</strong><span class="${dish.rem < 0 ? "galley-warning" : ""}">${dish.ordered}/${dish.loaded}</span></div>${groupLabels(groups)}${dish.rem < 0 ? `<p class="galley-warning subtle">⚠ Не хватает ${-dish.rem} порц. Уточните загрузку или замените заказ.</p>` : ""}</div>`;
       }).join("")}`;
     }).join("");
-    const drinks = Object.create(null);
+    const drinks = new Map(), hot = new Map(), addons = new Map();
+    const add = (list,name,status,seatLabel) => {
+      if (!list.has(name)) list.set(name,{now:[],later:[],served:[]});
+      list.get(name)[status].push(seatLabel);
+    };
     ids.forEach(id => {
       const seat = S.seats[id]; if (!seat) return;
-      const course = seat["s"+n];
-      for (const [field,label] of [["zd","к закуске"],["md","к горячему"],["t","чай / кофе"]]) {
-        for (const name of drinkChoices(course,field)) {
-          if (!drinks[name]) drinks[name] = {now:[],later:[],served:[]};
-          const addons = field === "t" && course.tAddons?.length ? "; добавки к заказу: " + esc(course.tAddons.join(" · ")) : "";
-          drinks[name][groupFor(seat,course)].push(id + " ("+label+addons+")");
-        }
+      const course = seat["s"+n], status = groupFor(seat,course);
+      for (const [field,label] of [["zd","к закуске"],["md","к горячему"]]) {
+        for (const name of drinkChoices(course,field)) add(drinks,name,status,`${id} (${label})`);
       }
+      const hotChoices = drinkChoices(course,"t");
+      for (const name of hotChoices) add(hot,name,status,id);
+      if (hotChoices.length) for (const name of course.tAddons || []) add(addons,name,status,id);
     });
-    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Напитки, чай и кофе</h3>${Object.entries(drinks).map(([name,groups]) => `<div class="galley-row"><strong style="font-size:13px">${esc(name)}</strong>${groupLabels(groups)}</div>`).join("") || '<p class="subtle">Нет заказов напитков</p>'}</section>`;
+    const rows = list => [...list].map(([name,groups]) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
+    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Напитки к блюдам</h3>${rows(drinks) || '<p class="subtle">Нет заказов напитков к блюдам</p>'}<section class="galley-hot"><h3>Горячие напитки</h3>${rows(hot) || '<p class="subtle">Нет заказов горячих напитков</p>'}<h4>Добавки · по креслам</h4>${rows(addons) || '<p class="subtle">Добавки не заказаны</p>'}</section></section>`;
   };
   const aperitifs = Object.create(null);
   const cocktailCounts = Object.create(null);
@@ -4213,6 +4238,20 @@ function drinkChoices(record, field) {
   return record[field] ? [record[field], ...(record[field + "More"] || [])] : [];
 }
 function drinkText(record, field) { return drinkChoices(record, field).map(displayName).join(" · "); }
+function renderSeatProgress(seat) {
+  const stages = [["Гость", !!(seat.name || seat.title || seat.allergy || seat.cvu || seat.wake || seat.ap)],
+    ...[1,2].filter(n => n === 1 || S.spec2Code).map(n => ["Питание " + n, hasCourseOrder(seat["s"+n])])];
+  return `<div class="order-progress" aria-label="Заполнение заказа">${stages.map(([label,filled]) => `<span>${label}: <b>${filled ? "есть записи" : "пусто"}</b></span>`).join("")}</div>`;
+}
+function renderHotDrinkOptions(course, prefix) {
+  const selected = drinkChoices(course,"t");
+  const chip = value => `<button type="button" class="chip${selected.includes(value) ? " on" : ""}" data-path="${prefix}t" data-val="${esc(value)}">${esc(displayName(value))}</button>`;
+  const group = (label,items) => `<div class="hot-group"><p class="field-label">${label}</p><div class="chips">${items.map(chip).join("")}</div></div>`;
+  const legacy = selected.filter(value => !TEA_LIST.includes(value));
+  return group("Чай",TEA_LIST.filter(value => value.startsWith("Чай"))) + group("Кофе и какао",TEA_LIST.filter(value => !value.startsWith("Чай"))) +
+    (legacy.length ? group("В сохранённом заказе · снять выбор",legacy) : "") +
+    `<div class="hot-group"><p class="field-label">Добавки к заказу горячих напитков</p><div class="chips">${TEA_ADDONS.map(value => { const on = course.tAddons?.includes(value) || false; return `<button type="button" class="chip${on ? " on" : ""}" data-tea-addon="${esc(value)}" aria-pressed="${on}" ${selected.length ? "" : "disabled"}>${esc(value)}</button>`; }).join("")}</div><p class="subtle">${selected.length ? "Добавки отмечаются для всего заказа горячих напитков этого питания." : "Сначала выберите горячий напиток."}</p></div>`;
+}
 function toggleTeaAddon(course, value) {
   if (!course?.t || !TEA_ADDONS.includes(value)) return false;
   if (course.status === "served" && !confirm("Это питание уже подано. Изменить добавки и вернуть статус «Принят»?")) return false;
@@ -4688,7 +4727,8 @@ document.addEventListener("DOMContentLoaded", () => {
   byId("sheetContent").addEventListener("input",e => {
     const key = ({ inGuestName:"name", inCvu:"cvu", inAllergy:"allergy" })[e.target.id];
     if (!key) return;
-    getSeat(activeSeatId)[key] = e.target.value; saveState();
+    const seat = getSeat(activeSeatId); seat[key] = e.target.value; saveState();
+    const progress = byId("soloProgress"); if (progress) progress.innerHTML = renderSeatProgress(seat);
     if (activeTab === "cabin") { rememberMapScroll(); byId("mainView").innerHTML = viewCleanCabin(); restoreMapScroll(); }
   });
   byId("modalBack").addEventListener("click",e => {
