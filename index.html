@@ -2153,7 +2153,7 @@ function currentPairPick() {
 }
 function pairCabinTools() {
   const pick = currentPairPick();
-  return `<div class="pair-tools"><button type="button" class="btn" id="btnPairMode" aria-pressed="${!!pick}">${pick ? 'Отменить выбор пары' : 'Обслужить вместе'}</button>${pick ? `<span role="status">${pick.ids.length === 2 ? esc(pick.ids.join(' и ')) : pick.ids.length ? esc(pick.ids[0]) + ' · выберите второе кресло' : 'Выберите два кресла'}</span><button type="button" class="btn primary" id="btnPairStart" ${pick.ids.length === 2 ? '' : 'disabled'}>Открыть пару</button>` : ''}</div>`;
+  return `<div class="pair-tools"><button type="button" class="btn" id="btnPairMode" aria-pressed="${!!pick}">${pick ? 'Отменить выбор пары' : 'Двойной заказ'}</button>${pick ? `<span role="status">${pick.ids.length === 2 ? esc(pick.ids.join(' и ')) : pick.ids.length ? esc(pick.ids[0]) + ' · выберите второе кресло' : 'Выберите два кресла'}</span><button type="button" class="btn primary" id="btnPairStart" ${pick.ids.length === 2 ? '' : 'disabled'}>Открыть пару</button>` : ''}</div>`;
 }
 function pairSeatPressed(id) {
   const pick = currentPairPick();
@@ -2180,7 +2180,7 @@ function handlePairCabinClick(event) {
 function openPairOrder(opener, ids) {
   if (document.getElementById('modalBack').classList.contains('open') || ids.length !== 2 || new Set(ids).size !== 2 || !ids.every(id => getAllSeatIds().includes(id))) return;
   pairOrder = {ids:[...ids], snapshot:JSON.stringify(S), draft:Object.fromEntries(ids.map(id => [id, clone(S.seats[id] || blankSeat())])), focusId:ids[0], step:'guest', review:false, checked:new Set(), dirty:false, views:{}, message:''};
-  openEntryDialog('pair',opener,'Обслужить вместе','<div id="pairWorkspace"></div>');
+  openEntryDialog('pair',opener,'Двойной заказ','<div id="pairWorkspace"></div>');
   renderPairOrder();
 }
 // Расчёт остатков и правила выбора видят оба черновика, не записывая их на диск.
@@ -2292,7 +2292,9 @@ function captureOrderEntryView() {
   const focusAttrs = focused && document.getElementById("orderSheet").contains(focused)
     ? attrs.filter(a => focused.hasAttribute(a)).map(a => [a, focused.getAttribute(a)]) : [];
   const summary = focused?.matches("summary") ? focused.parentElement.dataset.orderExtra : null;
-  return {scroll:box.scrollTop, open:[...box.querySelectorAll("[data-order-extra][open]")].map(e => e.dataset.orderExtra),focusAttrs,summary};
+  const selection = focused && typeof focused.selectionStart === "number"
+    ? {start:focused.selectionStart, end:focused.selectionEnd, direction:focused.selectionDirection || "none"} : null;
+  return {scroll:box.scrollTop, open:[...box.querySelectorAll("[data-order-extra][open]")].map(e => e.dataset.orderExtra),focusAttrs,summary,selection};
 }
 function finishOrderEntryView(view) {
   const box = document.getElementById("sheetContent");
@@ -2340,7 +2342,15 @@ function finishOrderEntryView(view) {
       const selector = view.focusAttrs.map(([a,v]) => `[${a}="${CSS.escape(v)}"]`).join("");
       focus = document.getElementById("orderSheet").querySelector(selector);
     }
-    focus?.focus({preventScroll:true});
+    if (focus) {
+      focus.focus({preventScroll:true});
+      if (view.selection && typeof focus.setSelectionRange === "function") {
+        const length = focus.value.length;
+        const start = Math.min(view.selection.start, length);
+        const end = Math.min(view.selection.end, length);
+        focus.setSelectionRange(start, end, view.selection.direction);
+      }
+    }
   }
   box.scrollTop = view ? view.scroll : 0;
 }
@@ -2599,10 +2609,10 @@ function settingsHelpHtml() {
       <p>Все инструкции встроены в приложение и доступны без интернета после подготовки офлайн-копии. Сверяйте меню, состав и обслуживание с актуальными документами авиакомпании.</p>
       <details class="settings-guide"><summary>1. Перед рейсом</summary><ol><li>В шапке нажмите «Выбрать рацион», затем выберите базу питания, ручной цикл и точный код рациона. Аэропорт вылета и база загрузки могут отличаться — проверьте фактическую загрузку.</li><li>В «Рейс и данные» при необходимости проверьте дату и сохранённые рейсы. Один номер и одна дата открывают тот же рейс; другая дата создаёт отдельный.</li><li>Откройте «Комплектация» только для схемы салона, числа рационов и фактической загрузки. Смена меню после подтверждения сбрасывает заказы питания.</li><li>Сверьте фактическую загрузку по блюдам с ведомостью. Рассчитанные количества не означают, что загрузка проверена.</li><li>Проверьте сводку рейса, сохранение, готовность без сети и запуск в авиарежиме. Сделайте JSON-копию.</li></ol></details>
       <details class="settings-guide"><summary>2. Схема салона и поиск</summary><p>Нажмите кресло, чтобы открыть карточку. Поиск и фильтры помогают найти гостя, заказ, ограничения или статус; остальные кресла остаются на своих местах. «Обзор» показывает статусы, «Крупно» — имена и блюда. В широкой схеме прокручивается только область кресел. «Остатки горячего» раскрываются нажатием; предупреждение о дефиците видно и в свёрнутом виде.</p></details>
-      <details class="settings-guide"><summary>3. Карточка гостя и ограничения</summary><p>Во вкладке «Гость» заполните имя и обращение при необходимости, запишите аллергии, пожелания и режим отдыха. Выберите аперитивы. Эти данные хранятся только в текущем браузере.</p><p class="settings-note">Поле аллергий — запись со слов гостя, не автоматическая проверка безопасности блюда. Состав сверяется с актуальной ТТК и маркировкой. «Не будить» исключает неподанное питание из списка «Сейчас» на кухне, но не означает, что питание уже подано.</p></details>
+      <details class="settings-guide"><summary>3. Карточка гостя и ограничения</summary><p>Во вкладке «Гость» заполните имя, запишите аллергии, пожелания и режим отдыха. Выберите аперитивы. Эти данные хранятся только в текущем браузере.</p><p class="settings-note">Поле аллергий — запись со слов гостя, не автоматическая проверка безопасности блюда. Состав сверяется с актуальной ТТК и маркировкой. «Не будить» исключает неподанное питание из списка «Сейчас» на кухне, но не означает, что питание уже подано.</p></details>
       <details class="settings-guide"><summary>4. Питание, напитки и статусы</summary><p>Во вкладках «Питание 1 / 2» выберите закуску и горячее. Второе питание показывается, только если предусмотрено рейсом. Списки напитков и чая/кофе раскрываются отдельно. Нажатие добавляет напиток, повторное убирает его; можно выбрать несколько разных. Это выбор позиций, а не количество одинаковых порций.</p><p>Статусы независимы по питаниям: принятый заказ, «Позже», «Подано». Не отмечайте подачу заранее. Для изменения уже поданного заказа и добавления блюда сверх остатка требуется подтверждение. Предупреждение о дефиците не подтверждает фактическое наличие.</p></details>
       <details class="settings-guide"><summary>5. Сверка и переход между гостями</summary><p>«Далее» и верхняя стрелка вперёд сначала показывают сверку заполненного заказа. Повторите выбор гостю, затем подтвердите переход или вернитесь к карточке. На последнем кресле подтверждение возвращает к салону; перехода по кругу нет. Верхняя стрелка назад открывает предыдущее кресло.</p><p>На телефоне свайп влево по свободной части шапки вызывает такой же переход со сверкой; вправо — предыдущее кресло. Потяните серую ручку вниз для закрытия. Прокрутка блюд не закрывает карточку. На планшете и ПК используйте кнопки. При уменьшении движения в системе карточка не смещается за пальцем.</p></details>
-      <details class="settings-guide"><summary>6. Обслужить вместе</summary><p>В «Салоне» нажмите «Обслужить вместе», выберите два кресла и откройте пару. На широком экране обе карточки видны сразу, на узком переключайтесь кнопками с номерами кресел.</p><p>Заказы и ограничения заполняются отдельно; ничего не копируется между креслами. Нажмите «Сверить оба заказа», проверьте выбор с каждым гостем и сохраните оба заказа на устройстве. До сохранения изменения остаются в черновиках.</p></details>
+      <details class="settings-guide"><summary>6. Двойной заказ</summary><p>В «Салоне» нажмите «Двойной заказ», выберите два кресла и откройте пару. На широком экране обе карточки видны сразу, на узком переключайтесь кнопками с номерами кресел.</p><p>Заказы и ограничения заполняются отдельно; ничего не копируется между креслами. Нажмите «Сверить оба заказа», проверьте выбор с каждым гостем и сохраните оба заказа на устройстве. До сохранения изменения остаются в черновиках.</p></details>
       <details class="settings-guide"><summary>7. Меню и справочник</summary><p>«Меню» в карточке открывает отдельный экран блюд и напитков для гостя. Там нет имён, номеров кресел, заметок и остатков. Закрытие возвращает к прежней карточке и прокрутке.</p><p>Раздел «Гид» — справочник блюд и напитков, не подтверждённая карта аллергенов.</p></details>
       <details class="settings-guide"><summary>8. Кухня и бланк</summary><p>На «Кухне» блюда и напитки сгруппированы по очередности подачи; проверяйте выбранное питание и статусы. Аперитивы показаны полным списком, отдельного статуса их подачи нет. Во вкладке «Бланк» доступны текстовый экспорт, JSON и печать A4/A5. Печатные и скачанные заказы могут содержать персональные данные: защищайте их по правилам авиакомпании.</p></details>
       <details class="settings-guide"><summary>9. Сохранение, JSON и перенос</summary><p>«Сохранено на устройстве» означает успешную запись в локальное хранилище. «Рейс и данные» → «Копия заказов» скачивает JSON <strong>всех</strong> сохранённых рейсов. Восстановление проверяет файл и после подтверждения <strong>заменяет все рейсы</strong> в этом браузере — перед ним сохраните текущую копию.</p><p>Данные не синхронизируются между телефонами, браузерами или способами запуска. Для переноса используйте JSON. Старые версии не понимают дополнительные напитки и могут потерять их при пересохранении. «Приложение без заказов» — чистый HTML, не копия данных.</p><p class="settings-note">Красная ошибка сохранения: не закрывайте страницу. Скачайте JSON из текущего состояния, затем устраните причину. При конфликте вкладок сохраните копию и перезагрузите данные. Не очищайте хранилище для исправления ошибки.</p></details>
