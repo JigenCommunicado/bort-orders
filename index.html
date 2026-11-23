@@ -2311,24 +2311,24 @@ function finishOrderEntryView(view) {
   const summary = document.getElementById("sheetQuickSummary");
   const seat = getSeat(activeSeatId);
   const course = seat[activeStep];
-  const serviceLabel = value => value === "served" ? "Подано" : value === "later" ? "Позже" : "Ожидает";
+  const serviceLabel = value => value === "served" ? "Подано" : value === "later" ? "Позже" : "";
   const serviceState = number => {
     const value = seat["s" + number];
-    return hasCourseOrder(value) ? "Заказ принят" : "Не заполнено";
+    return hasCourseOrder(value) ? "Заказ принят" : value.status !== "pending" ? serviceLabel(value.status) : "";
   };
   summary.replaceChildren();
   const context = document.createElement("div");
   context.className = "pos-order-summary";
   const currentLabel = activeStep === "guest" ? "Гость" : "Питание " + activeStep.slice(1);
-  const guestLabel = [seat.title, seat.name].filter(Boolean).join(" ") || "Имя не заполнено";
+  const guestLabel = seat.name || "";
   const guestFlags = [seat.allergy && "Есть ограничения", seat.wake && seat.wake !== "Будить" && seat.wake, seat.cvu && "Есть пожелание"].filter(Boolean);
   const serviceRows = [1,2].filter(number => number === 1 || S.spec2Code).map(number => {
     const value = seat["s" + number];
     const status = serviceState(number);
-    return `<span class="pos-service-state${hasCourseOrder(value) ? " is-ready" : ""}"><strong>П${number}</strong> ${status} · ${serviceLabel(value.status)}</span>`;
+    return status ? `<span class="pos-service-state${hasCourseOrder(value) ? " is-ready" : ""}"><strong>П${number}</strong> ${status}</span>` : "";
   }).join("");
   const selected = course && [course.z && ("Зак: " + displayName(course.z)),course.m && ("Гор: " + displayName(course.m))].filter(Boolean).join(" · ");
-  context.innerHTML = `<div class="pos-summary-head"><strong>${esc(currentLabel)}</strong><span>${index + 1} из ${ids.length}</span></div><div class="pos-summary-main"><span class="pos-summary-guest">${esc(guestLabel)}</span>${guestFlags.length ? `<span class="pos-summary-flags">${esc(guestFlags.join(" · "))}</span>` : ""}</div><div class="pos-service-states">${serviceRows}</div>${activeStep !== "guest" ? `<div class="pos-summary-selection"><span>Выбрано</span><strong>${esc(selected || "Блюда пока не выбраны")}</strong></div>` : ""}`;
+  context.innerHTML = `<div class="pos-summary-head"><strong>${esc(currentLabel)}</strong><span>${index + 1} из ${ids.length}</span></div><div class="pos-summary-main"><span class="pos-summary-guest">${esc(guestLabel)}</span>${guestFlags.length ? `<span class="pos-summary-flags">${esc(guestFlags.join(" · "))}</span>` : ""}</div><div class="pos-service-states">${serviceRows}</div>${activeStep !== "guest" && selected ? `<div class="pos-summary-selection"><span>Выбрано</span><strong>${esc(selected)}</strong></div>` : ""}`;
   summary.append(context);
   summary.insertAdjacentHTML("beforeend", `<div id="soloProgress">${renderSeatProgress(seat)}</div>`);
   const warning = document.createElement("p"); warning.id = "sheetSaveWarning"; warning.setAttribute("role","status");
@@ -3610,7 +3610,7 @@ function renderCleanSeatTile(seatObj) {
   const classes = ["seat-tile", sv.status === "served" ? "served" : later ? "dnd" : used ? "used" : "", pairSeatPressed(id) ? "active" : "", seat.allergy ? "has-allergy" : ""].filter(Boolean).join(" ");
   const status = sv.status === "served" ? "✓ Подано" : later ? "◷ Позже" : hasCourseOrder(sv) ? "Принят" : "Нет заказа";
   const summary = sv.m || sv.z || seat.ap || "—";
-  const guest = [seat.title,seat.name].filter(Boolean).join(" ");
+  const guest = seat.name;
   const accessible = `Кресло ${id}. ${guest}. ${summary}. ${status}${seat.allergy ? ". Аллергии: " + seat.allergy : ""}${seat.cvu ? ". Пожелания: " + seat.cvu : ""}`;
   return `<button type="button" class="${classes}" data-seat="${esc(id)}" aria-label="${esc(accessible)}" aria-pressed="${pairSeatPressed(id)}" title="${esc(accessible)}">
     <span class="seat-row-top"><span class="seat-id">${esc(id)}</span><span class="seat-corner-badge">${seat.allergy ? uiIcon("alert") : seat.cvu ? uiIcon("note") : ""}</span></span>
@@ -3857,13 +3857,8 @@ function renderStepSheet() {
   if (activeStep === "guest") {
     box.innerHTML = `
       <div class="field-group">
-        <div class="field-label"><span>Обращение и имя гостя</span></div>
-        <div class="guest-fields" style="display:grid; grid-template-columns:auto 1fr; gap:6px;">
-          <div class="chips">
-            ${["Г-н", "Г-жа", "Реб."].map(t => `<button type="button" class="chip${s.title === t ? " on" : ""}" data-path="title" data-val="${t}">${t}</button>`).join("")}
-          </div>
-          <input type="text" class="in" id="inGuestName" aria-label="Имя гостя" maxlength="120" placeholder="Имя / Фамилия" value="${esc(s.name)}" autocomplete="off">
-        </div>
+        <label class="field-label" for="inGuestName">Имя гостя</label>
+        <input type="text" class="in" id="inGuestName" aria-label="Имя гостя" maxlength="120" aria-label="Имя гостя" maxlength="120" placeholder="Имя / Фамилия" value="${esc(s.name)}" autocomplete="off">
       </div>
 
       <div class="field-group allergy-field"><label class="field-label" for="inAllergy">${uiIcon("alert")} Аллергии и ограничения</label><input class="in" id="inAllergy" maxlength="500" value="${esc(s.allergy)}" placeholder="Со слов пассажира: орехи, молоко…"><p class="subtle">Запись пожелания, не проверка безопасности блюда. Сверьте с актуальной ТТК и правилами авиакомпании.</p></div>
@@ -4146,7 +4141,7 @@ function buildA5TableHtml() {
     const group = ids.slice(offset, offset + 6);
     blocks.push(`<section class="print-page"><h2>${S.manualSetup ? `База ${esc(SPECS[S.spec1Code]?.source?.base || '—')} · ${esc(CABIN_PRESETS[S.presetKey]?.name || 'Салон')}` : `FV ${esc(S.flightNo)} · ${esc(S.date)} · ${esc(fl.route)}`}</h2><p>Цикл ${S.cycle} · Кресла ${group[0]}–${group[group.length-1]} · ${esc(S.spec1Code)}${S.spec2Code ? " / " + esc(S.spec2Code) : ""}</p>
       <table class="orders-table"><thead><tr><th scope="col">Кресло / гость</th><th scope="col">Аперитив / пожелания</th><th scope="col">Питание 1</th>${S.spec2Code ? '<th scope="col">Питание 2</th>' : ""}</tr></thead><tbody>
-      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc([seat.title,seat.name].filter(Boolean).join(" "))}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
+      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc(seat.name)}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
       </tbody></table><p class="print-foot">Конфиденциально · Данные пассажиров · Страница ${Math.floor(offset/6)+1}/${Math.ceil(ids.length/6)}</p></section>`);
   }
   return blocks.join("");
@@ -4159,7 +4154,7 @@ function buildOrderText() {
   getAllSeatIds().forEach(id => {
     if (!isSeatUsed(id)) return;
     const seat = getSeat(id);
-    out.push(`${id} ${[seat.title,seat.name].filter(Boolean).join(" ")} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}`);
+    out.push(`${id} ${seat.name} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}`);
     [1,2].filter(n => n === 1 || S.spec2Code).forEach(n => {
       const sv = seat["s"+n];
       out.push(`  П${n}: ${sv.z || "—"} (напитки: ${drinkText(sv,"zd") || "—"}) | ${sv.m || "—"} (напитки: ${drinkText(sv,"md") || "—"}) | ${drinkText(sv,"t") || "—"}${sv.tAddons?.length ? " (добавки: " + sv.tAddons.join(" · ") + ")" : ""} | ${statusLabel(sv.status)}`);
@@ -4239,9 +4234,7 @@ function drinkChoices(record, field) {
 }
 function drinkText(record, field) { return drinkChoices(record, field).map(displayName).join(" · "); }
 function renderSeatProgress(seat) {
-  const stages = [["Гость", !!(seat.name || seat.title || seat.allergy || seat.cvu || seat.wake || seat.ap)],
-    ...[1,2].filter(n => n === 1 || S.spec2Code).map(n => ["Питание " + n, hasCourseOrder(seat["s"+n])])];
-  return `<div class="order-progress" aria-label="Заполнение заказа">${stages.map(([label,filled]) => `<span>${label}: <b>${filled ? "есть записи" : "пусто"}</b></span>`).join("")}</div>`;
+  return "";
 }
 function renderHotDrinkOptions(course, prefix) {
   const selected = drinkChoices(course,"t");
@@ -4730,6 +4723,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const seat = getSeat(activeSeatId); seat[key] = e.target.value; saveState();
     const progress = byId("soloProgress"); if (progress) progress.innerHTML = renderSeatProgress(seat);
     if (activeTab === "cabin") { rememberMapScroll(); byId("mainView").innerHTML = viewCleanCabin(); restoreMapScroll(); }
+    const view = captureOrderEntryView();
+    renderStepSheet();
+    finishOrderEntryView(view);
   });
   byId("modalBack").addEventListener("click",e => {
     if (e.target.id === "modalBack" || e.target.closest("[data-close-modal]")) { closeModal(); return; }
