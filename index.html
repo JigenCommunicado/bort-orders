@@ -877,20 +877,11 @@ h1 { font-size:var(--text-screen); font-weight:700; line-height:1.2; letter-spac
 
 /* POS-style order context: current guest, service status, and the active selection. */
 .sheet-quick-summary { flex-shrink:0; padding:0 18px; background:var(--surface); }
-.pos-order-summary { display:grid; gap:7px; margin:8px 0 2px; padding:10px 0; border-bottom:1px solid var(--line); color:var(--ink-2); }
-.pos-summary-head,.pos-summary-main,.pos-service-states,.pos-summary-selection { display:flex; align-items:center; gap:8px; min-width:0; }
-.pos-summary-head { justify-content:space-between; color:var(--muted); font-size:12px; }
-.pos-summary-head strong { color:var(--ink-2); font-size:var(--text-support); }
-.pos-summary-main { flex-wrap:wrap; }
-.pos-summary-guest { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink); font-size:var(--text-body); font-weight:700; }
-.pos-summary-flags { color:var(--warning); font-size:var(--text-support); font-weight:600; }
-.pos-service-states { flex-wrap:wrap; gap:5px; }
-.pos-service-state { display:inline-flex; align-items:center; min-height:24px; padding:3px 7px; border-radius:6px; background:var(--surface-2); color:var(--muted); font-size:12px; }
-.pos-service-state strong { margin-right:3px; color:var(--ink-2); }
-.pos-service-state.is-ready { color:var(--status); background:var(--status-bg); }
-.pos-summary-selection { padding-top:6px; font-size:var(--text-support); }
-.pos-summary-selection span { flex:none; color:var(--muted); }
-.pos-summary-selection strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink); font-size:var(--text-support); }
+.pos-order-summary { display:grid; gap:3px; margin:4px 0 0; padding:6px 0; border-bottom:1px solid var(--line); }
+.pos-summary-main { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; min-width:0; }
+.pos-summary-guest,.pos-summary-selection { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pos-summary-guest { font-size:var(--text-body); font-weight:600; }
+.pos-summary-flags,.pos-summary-selection { color:var(--ink-2); font-size:var(--text-support); }
 #sheetSaveWarning { margin:8px 0; color:var(--danger); font-size:12px; font-weight:650; max-height:80px; overflow-y:auto; }
 .order-extra { flex-shrink:0; border:1px solid var(--line); border-radius:11px; padding:0 12px; background:var(--surface); }
 .order-extra > summary { display:flex; align-items:center; gap:8px; min-height:48px; padding:8px 0; font-size:var(--text-label); font-weight:600; cursor:pointer; list-style:none; }
@@ -910,7 +901,6 @@ h1 { font-size:var(--text-screen); font-weight:700; line-height:1.2; letter-spac
 #orderSheet .icon-pill-btn[aria-disabled="true"] { opacity:.4; cursor:default; }
 @media(max-width:767px), (max-width:1019px) and (max-height:500px) {
   .sheet-quick-summary { padding:0 12px; }
-  .pos-order-summary { margin-top:6px; padding:9px 0; }
   .pos-summary-guest { font-size:var(--text-body); }
   #orderSheet .sheet-content { padding-top:10px; padding-bottom:12px; }
   .order-extra { padding:0 10px; }
@@ -921,6 +911,14 @@ h1 { font-size:var(--text-screen); font-weight:700; line-height:1.2; letter-spac
 @media(max-height:500px) {
   .pos-order-summary { display:none; }
 }
+
+/* Раскрываемые детали не уменьшают размер основных целей нажатия. */
+#orderSheet .dish-row, .pair-pane .dish-row { grid-template-columns:minmax(0,1fr); }
+.dish-composition dd { margin:0 0 10px; color:var(--ink-2); }
+.dish-composition dt { font-weight:600; }
+.order-extra .wish-preview { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#orderSheet .tablet-switch, .pair-pane .tablet-switch { min-height:44px; width:100%; justify-content:space-between; gap:8px; }
+.tablet-switch[aria-checked="true"] { color:var(--status); border-color:var(--status-line); background:var(--status-bg); }
 
 /* Manual meal selection is the primary entry point; flight lookup remains internal only. */
 .manual-meal-trigger { min-height:var(--primary-height); padding:0 14px; border:1px solid var(--brand); border-radius:var(--control-radius); background:var(--brand); color:#fff; font-size:var(--text-control); font-weight:600; line-height:1.35; }
@@ -2246,7 +2244,7 @@ function renderPairOrder() {
     return `<section class="pair-pane${p.focusId === id ? ' pair-current' : ''}" data-pair-pane="${esc(id)}" aria-label="Кресло ${esc(id)}"><h3>Кресло ${esc(id)}${seat.name ? ` · ${esc(seat.name)}` : ''}</h3><div data-pair-progress>${renderSeatProgress(seat)}</div>${p.review ? pairReadback(seat,id) : withPairSeat(id, () => p.step === 'guest' ? pairGuestFields(seat) : renderCourseStep(Number(p.step[1])))}</section>`;
   }).join('')}</div><p class="safety-note" role="status" ${p.message ? '' : 'hidden'}>${esc(p.message)}</p><div class="entry-dialog-actions"><button type="button" class="btn" ${p.review ? 'data-pair-back' : 'data-close-modal'}>${p.review ? 'К редактированию' : 'Отмена'}</button><button type="button" class="btn primary" ${p.review ? 'data-pair-save' : 'data-pair-review'} ${p.review && p.checked.size !== p.ids.length ? 'disabled' : ''}>${p.review ? `Сохранить ${esc(p.ids.join(' и '))}` : 'Сверить оба заказа'}</button></div>`;
   root.querySelectorAll('[data-pair-pane]').forEach(pane => pane.querySelectorAll('details[data-order-extra]').forEach(el => { el.open = !!open.get(pane.dataset.pairPane)?.includes(el.dataset.orderExtra); }));
-  root.querySelectorAll('[data-path],[data-dcat]').forEach(btn => btn.setAttribute('aria-pressed',String(btn.matches('.on,.active'))));
+  root.querySelectorAll('[data-path]:not([role="switch"]),[data-dcat]').forEach(btn => btn.setAttribute('aria-pressed',String(btn.matches('.on,.active'))));
 }
 function savePairOrder() {
   const p = pairOrder;
@@ -2271,6 +2269,7 @@ function initTogetherOrder() {
     if (!pairOrder?.draft[id] || !['name','allergy','cvu'].includes(field)) return;
     pairOrder.draft[id][field] = event.target.value; pairOrder.dirty = true; pairOrder.checked.clear();
     event.target.closest("[data-pair-pane]").querySelector("[data-pair-progress]").innerHTML = renderSeatProgress(pairOrder.draft[id]);
+    if (field === 'cvu') event.target.closest('[data-pair-pane]').querySelector('.wish-preview').textContent = wishPreview(pairOrder.draft[id]);
     if (field === 'name') event.target.closest('[data-pair-pane]').querySelector('h3').textContent = 'Кресло ' + id + (event.target.value ? ' · '+event.target.value : '');
   });
   pairBox().addEventListener('click',event => {
@@ -2309,7 +2308,7 @@ function initTogetherOrder() {
       } else return;
     } else return;
     p.message = '';
-    const attrs = [...button.attributes].filter(attr => attr.name.startsWith('data-'));
+    const attrs = [...button.attributes].filter(attr => attr.name.startsWith('data-') && (attr.name !== 'data-val' || button.getAttribute('role') !== 'switch'));
     renderPairOrder();
     const scope = id && !p.review ? pairBox().querySelector(`[data-pair-pane="${CSS.escape(id)}"]`) : pairBox();
     const next = attrs.length && scope?.querySelector(attrs.map(a => `[${a.name}="${CSS.escape(a.value)}"]`).join(''));
@@ -2326,7 +2325,7 @@ function captureOrderEntryView() {
   const focused = document.activeElement;
   const attrs = ["id","data-path","data-val","data-dcat","data-drink-target","data-course-status","data-dish-info","data-add-cvu","data-go-step","data-tea-addon"];
   const focusAttrs = focused && document.getElementById("orderSheet").contains(focused)
-    ? attrs.filter(a => focused.hasAttribute(a)).map(a => [a, focused.getAttribute(a)]) : [];
+    ? attrs.filter(a => focused.hasAttribute(a) && (a !== "data-val" || focused.getAttribute("role") !== "switch")).map(a => [a, focused.getAttribute(a)]) : [];
   const summary = focused?.matches("summary") ? focused.parentElement.dataset.orderExtra : null;
   const selection = focused && typeof focused.selectionStart === "number"
     ? {start:focused.selectionStart, end:focused.selectionEnd, direction:focused.selectionDirection || "none"} : null;
@@ -2349,27 +2348,13 @@ function finishOrderEntryView(view) {
   const summary = document.getElementById("sheetQuickSummary");
   const seat = getSeat(activeSeatId);
   const course = seat[activeStep];
-  const serviceLabel = value => value === "served" ? "Подано" : value === "later" ? "Позже" : "";
-  const serviceState = number => {
-    const value = seat["s" + number];
-    return hasCourseOrder(value) ? "Заказ принят" : value.status !== "pending" ? serviceLabel(value.status) : "";
-  };
   summary.replaceChildren();
   const context = document.createElement("div");
   context.className = "pos-order-summary";
-  const currentLabel = activeStep === "guest" ? "Гость" : "Питание " + activeStep.slice(1);
-  const guestLabel = seat.name || "";
-  const guestFlags = [seat.allergy && "Есть ограничения", seat.wake && seat.wake !== "Будить" && seat.wake, seat.cvu && "Есть пожелание"].filter(Boolean);
-  const serviceRows = [1,2].filter(number => number === 1 || S.spec2Code).map(number => {
-    const value = seat["s" + number];
-    const status = serviceState(number);
-    return status ? `<span class="pos-service-state${hasCourseOrder(value) ? " is-ready" : ""}"><strong>П${number}</strong> ${status}</span>` : "";
-  }).join("");
-  const selected = course && [course.z && ("Зак: " + displayName(course.z)),course.m && ("Гор: " + displayName(course.m))].filter(Boolean).join(" · ");
-  context.innerHTML = `<div class="pos-summary-head"><strong>${esc(currentLabel)}</strong><span>${index + 1} из ${ids.length}</span></div><div class="pos-summary-main"><span class="pos-summary-guest">${esc(guestLabel)}</span>${guestFlags.length ? `<span class="pos-summary-flags">${esc(guestFlags.join(" · "))}</span>` : ""}</div><div class="pos-service-states">${serviceRows}</div>${activeStep !== "guest" && selected ? `<div class="pos-summary-selection"><span>Выбрано</span><strong>${esc(selected)}</strong></div>` : ""}`;
+  const selected = course && [course.z && displayName(course.z), course.m && displayName(course.m)].filter(Boolean).join(" · ");
+  context.innerHTML = `<div class="pos-summary-main"><span class="pos-summary-guest"></span><span class="pos-summary-flags" hidden></span></div>${selected ? `<div class="pos-summary-selection" aria-label="Выбранные блюда">${esc(selected)}</div>` : ""}`;
   summary.append(context);
   refreshGuestSummary(seat);
-  summary.insertAdjacentHTML("beforeend", `<div id="soloProgress">${renderSeatProgress(seat)}</div>`);
   const warning = document.createElement("p"); warning.id = "sheetSaveWarning"; warning.setAttribute("role","status");
   summary.append(warning); refreshSheetSaveWarning();
   if (view) {
@@ -2394,13 +2379,14 @@ function finishOrderEntryView(view) {
 function refreshGuestSummary(seat) {
   const name = document.querySelector('#sheetQuickSummary .pos-summary-guest');
   if (!name) return;
-  name.textContent = seat.name;
-  let flags = name.parentElement.querySelector('.pos-summary-flags');
-  if (!flags) {
-    flags = document.createElement('span'); flags.className = 'pos-summary-flags'; name.after(flags);
-  }
-  flags.textContent = [seat.allergy && 'Есть ограничения', seat.wake && seat.wake !== 'Будить' && seat.wake, seat.cvu && 'Есть пожелание', seat.tablet && 'ЦВУ выдано'].filter(Boolean).join(' · ');
+  name.textContent = seat.name.trim();
+  name.hidden = !name.textContent;
+  const flags = name.nextElementSibling;
+  flags.textContent = [activeStep === 'guest' && seat.tablet && 'ЦВУ выдано',
+    activeStep === 'guest' && seat.wake === 'Не будить' && seat.wake].filter(Boolean).join(' · ');
   flags.hidden = !flags.textContent;
+  name.parentElement.hidden = name.hidden && flags.hidden;
+  name.parentElement.parentElement.hidden = name.parentElement.hidden && !name.parentElement.nextElementSibling;
 }
 function refreshSheetSaveWarning() {
   const warning = document.getElementById("sheetSaveWarning");
@@ -2734,7 +2720,7 @@ function pinSheetActions(box) {
   const actions = document.getElementById("sheetActions");
   actions.replaceChildren();
   const footer = box.lastElementChild;
-  if (footer && footer.querySelector("[data-go-step]")) {
+  if (footer && footer.querySelector("[data-go-step], #btnNextSeatStep")) {
     footer.removeAttribute("style");
     actions.append(...footer.childNodes);
     footer.remove();
@@ -3814,7 +3800,6 @@ function renderCourseStep(svcNum) {
         <span>${esc(displayName(st.short))}</span>
         <span class="dish-rem${st.rem <= 0 && sv.z !== st.short ? " low" : ""}">ост. ${st.rem}</span>
       </button>
-      <button type="button" class="info-q-btn" data-dish-info="${svcNum}:z:${idx}" title="Состав, граммовки и термины">?</button>
     </div>
   `).join("");
 
@@ -3824,7 +3809,6 @@ function renderCourseStep(svcNum) {
         <span>${esc(displayName(st.short))}</span>
         <span class="dish-rem${st.rem <= 0 && sv.m !== st.short ? " low" : ""}">ост. ${st.rem}</span>
       </button>
-      <button type="button" class="info-q-btn" data-dish-info="${svcNum}:m:${idx}" title="Состав, граммовки и термины">?</button>
     </div>
   `).join("");
 
@@ -3836,8 +3820,8 @@ function renderCourseStep(svcNum) {
   const activeDrinkVal = drinkChoices(sv,activeDrinkTarget.endsWith("md") ? "md" : "zd");
 
   return `
-    ${seatSafetyNotice(s)}
-    ${hasSoupService(sp) ? `<p class="subtle">${SOUP_SERVICE_ORDER}</p><details class="order-extra" data-order-extra="aperitif"><summary>Аперитив <span>${esc(drinkText(s,"ap") || "Выбрать")}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>` : ""}
+    ${seatSafetyNotice(s, false)}
+    ${hasSoupService(sp) ? `<p class="subtle">${SOUP_SERVICE_ORDER}</p><details class="order-extra" data-order-extra="aperitif"><summary>Аперитив <span>${esc(drinkText(s,"ap"))}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>` : ""}
     ${renderMealExtras(sp, sv, prefix)}
     <!-- Закуска -->
     <div class="field-group">
@@ -3845,6 +3829,7 @@ function renderCourseStep(svcNum) {
         <span>Закуска (${esc(sp.code)})</span>
       </div>
       <div class="dish-list">${zListHtml}</div>
+      ${renderDishComposition(zStats, "z")}
     </div>
 
     ${renderMealExtrasAfterStarter(sp, sv, prefix)}
@@ -3857,22 +3842,19 @@ function renderCourseStep(svcNum) {
         ${pairing ? `<button type="button" class="chip gold-chip${activeDrinkVal.includes(pairing.drink) ? " on" : ""}" data-path="${activeDrinkTarget}" data-val="${esc(pairing.drink)}">${esc(displayName(pairing.label))}</button>` : ""}
       </div>
       <div class="dish-list">${mListHtml}</div>
+      ${renderDishComposition(mStats, "m")}
     </div>
     ` : ""}
 
     <!-- Напиток к трапезе (с категориями) -->
     <details class="order-extra" data-order-extra="drinks"><summary>Напитки к блюдам <span>${esc([sv.zd && ("Зак: " + drinkText(sv,"zd")),sv.md && ("Гор: " + drinkText(sv,"md"))].filter(Boolean).join(" · ") || "Выбрать")}</span></summary><div class="field-group">
-      <div class="field-label">
-        <span>Напиток к блюду</span>
-        <span style="color:var(--accent); text-transform:none;">${esc([sv.zd && ("Зак: " + drinkText(sv,"zd")), sv.md && ("Гор: " + drinkText(sv,"md"))].filter(Boolean).join(" • ") || "не выбран")}</span>
-      </div>
       <div class="chips" role="group" aria-label="К какому блюду напиток"><button type="button" class="chip${activeDrinkTarget.endsWith("zd") ? " on" : ""}" data-drink-target="${svcNum}:zd">К закуске</button><button type="button" class="chip${activeDrinkTarget.endsWith("md") ? " on" : ""}" data-drink-target="${svcNum}:md">К горячему</button></div>
       ${renderDrinkSelector(activeDrinkTarget, activeDrinkVal)}
     </div>
 
     </details>
     <!-- Чай / Кофе и Десерт -->
-    <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(drinkText(sv,"t") || "Выбрать")}</span></summary><div class="field-group">
+    <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(drinkText(sv,"t"))}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Чай / Кофе</span>
       </div>
@@ -3937,28 +3919,26 @@ function renderStepSheet() {
           <span>${uiIcon("wine")} Аперитив</span>
           <span style="color:var(--ink-2); text-transform:none;">${esc(drinkText(s,"ap") || "не выбран")}</span>
         </div>
-        <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(drinkText(s,"ap") || "Выбрать")}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>
+        <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(drinkText(s,"ap"))}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>
       </div>
 
       ${renderTablet(s)}
       ${renderWishes(s)}
+      <details class="order-extra" data-order-extra="seat-more"><summary>Ещё</summary><div class="field-group"><button type="button" class="btn danger" id="btnClearSeat">Очистить кресло</button></div></details>
 
       <div style="display:flex; justify-content:space-between; padding-top:4px;">
-        <button type="button" class="btn danger" id="btnClearSeat">Очистить кресло</button>
         <button type="button" class="btn primary" data-go-step="s1">Перейти к питанию ${uiIcon("right")}</button>
       </div>
     `;
   } else if (activeStep === "s1") {
     box.innerHTML = renderCourseStep(1) + `
       <div style="display:flex; justify-content:space-between; padding-top:4px;">
-        <button type="button" class="btn" data-go-step="guest">← Гость</button>
         <button type="button" class="btn primary" id="btnNextSeatStep">Следующее кресло →</button>
       </div>
     `;
   } else {
     box.innerHTML = renderCourseStep(2) + `
       <div style="display:flex; justify-content:space-between; padding-top:4px;">
-        <button type="button" class="btn" data-go-step="s1">← Питание 1</button>
         <button type="button" class="btn primary" id="btnNextSeatStep">Следующее кресло →</button>
       </div>
     `;
@@ -4459,7 +4439,7 @@ function serviceChoiceGroup(label, path, values, selected) {
   return `<section class="field-group"><p class="field-label">${label}</p><div class="chips" role="group" aria-label="${label}">${values.map(([value,text]) => `<button type="button" class="chip service-choice${selected === value ? ' on' : ''}" style="min-height:44px" data-path="${path}" data-val="${esc(value)}" aria-pressed="${selected === value}">${selected === value ? '✓ ' : ''}${esc(text)}</button>`).join('')}</div></section>`;
 }
 function renderTablet(seat) {
-  return serviceChoiceGroup('ЦВУ · бортовой планшет','tablet',[['issued','Выдано'],['returned','Не выдано']],seat.tablet ? 'issued' : 'returned');
+  return `<button type="button" class="btn tablet-switch${seat.tablet ? ' on' : ''}" role="switch" aria-label="Планшет выдан" aria-checked="${!!seat.tablet}" data-path="tablet" data-val="${seat.tablet ? 'returned' : 'issued'}"><span>Планшет ЦВУ</span><span aria-hidden="true">${tabletLabel(seat)}</span></button>`;
 }
 function hasSoupService(spec) { return !!(spec?.soup || spec?.supplements?.some(item => /(?:^|\s)суп(?:[\s-]|$)/i.test(item.short))); }
 const SOUP_SERVICE_ORDER = 'Аперитив → салат → закуска → суп → горячее блюдо → горячий напиток → десерт';
@@ -4477,14 +4457,22 @@ function renderDessert(spec, course, prefix) {
 }
 function renderWishes(seat, pair = false) {
   const tags = ['Лёд 3 куб.','Лимон','Орехи NUTS','Канапе CA2','Дижестив Коньяк 75мл','Подать позже'];
-  return `<section class="field-group"><label class="field-label">${uiIcon('note')} Пожелания гостя<textarea class="ta" ${pair ? 'data-pair-field="cvu"' : 'id="inCvu"'} aria-label="Особые пожелания" maxlength="1000" placeholder="Особые пожелания гостя…">${esc(seat.cvu)}</textarea></label><div class="chips">${tags.map(tag => `<button type="button" class="chip" style="min-height:44px" data-add-cvu="${esc(tag)}">+ ${esc(tag)}</button>`).join('')}</div></section>`;
+  return `<details class="order-extra" data-order-extra="wishes"><summary>Пожелания <span class="wish-preview">${esc(wishPreview(seat))}</span></summary><div class="field-group"><label class="field-label">${uiIcon('note')} Пожелания гостя<textarea class="ta" ${pair ? 'data-pair-field="cvu"' : 'id="inCvu"'} aria-label="Особые пожелания" maxlength="1000" placeholder="Особые пожелания гостя…">${esc(seat.cvu)}</textarea></label><div class="chips">${tags.map(tag => `<button type="button" class="chip" style="min-height:44px" data-add-cvu="${esc(tag)}">+ ${esc(tag)}</button>`).join('')}</div></div></details>`;
+}
+function wishPreview(seat) {
+  const text = seat.cvu.trim();
+  return text.length > 64 ? text.slice(0,63) + '…' : text;
+}
+function renderDishComposition(items, field) {
+  if (!items.length) return '';
+  return `<details class="order-extra dish-composition" data-order-extra="composition-${field}"><summary aria-label="Состав блюд: ${field === 'z' ? 'закуски' : 'горячее'}">Состав блюд</summary><div class="field-group"><p class="safety-note">Состав и аллергены сверяйте по актуальной ТТК и маркировке.</p><dl>${items.map(item => `<dt>${esc(displayName(item.short))}</dt><dd>${esc(item.full)}</dd>`).join('')}</dl></div></details>`;
 }
 function addWish(seat, value) {
   if (!seat.cvu.split(', ').includes(value)) seat.cvu = [seat.cvu,value].filter(Boolean).join(', ').slice(0,1000);
 }
 function statusLabel(status) { return ({ pending:"Заказ принят", later:"◷ Подать позже", served:"✓ Подано" })[status] || "Заказ принят"; }
-function seatSafetyNotice(seat) {
-  return `${seat.allergy ? `<div class="safety-note allergy-alert" role="note"><strong>⚠ Аллергии / ограничения</strong><br>${esc(seat.allergy)}<br><small>Проверьте актуальную ТТК. Приложение не определяет безопасность блюда.</small></div>` : ""}${seat.cvu ? `<div class="seat-request"><strong>Пожелания:</strong> ${esc(seat.cvu)}</div>` : ""}${seat.wake === "Не будить" ? '<div class="seat-request">☾ Не будить. Подачу согласовать отдельно.</div>' : ""}`;
+function seatSafetyNotice(seat, showWishes = true) {
+  return `${seat.allergy ? `<div class="safety-note allergy-alert" role="note"><strong>⚠ Аллергии / ограничения</strong><br>${esc(seat.allergy)}<br><small>Проверьте актуальную ТТК. Приложение не определяет безопасность блюда.</small></div>` : ""}${showWishes && seat.cvu ? `<div class="seat-request"><strong>Пожелания:</strong> ${esc(seat.cvu)}</div>` : ""}${seat.wake === "Не будить" ? '<div class="seat-request">☾ Не будить. Подачу согласовать отдельно.</div>' : ""}`;
 }
 function renderServiceStatus(n, course) {
   return `<div class="service-status"><p class="field-label">Статус питания ${n}</p><div class="chips" role="group" aria-label="Статус питания ${n}">${[["pending","Принят"],["later","◷ Позже"],["served","✓ Подано"]].map(([key,label]) => `<button type="button" class="chip${course.status === key ? " on" : ""}" data-course-status="${n}:${key}" aria-pressed="${course.status === key}">${label}</button>`).join("")}</div></div>`;
@@ -4515,7 +4503,7 @@ function offerUndo(message, before) {
   });
 }
 function syncPressedStates() {
-  document.querySelectorAll("[data-path]").forEach(btn => btn.setAttribute("aria-pressed", String(btn.classList.contains("on"))));
+  document.querySelectorAll('[data-path]:not([role="switch"])').forEach(btn => btn.setAttribute("aria-pressed", String(btn.classList.contains("on"))));
   document.querySelectorAll("[data-dcat]").forEach(btn => btn.setAttribute("aria-pressed", String(btn.classList.contains("active"))));
 }
 function renderStockEditor() {
@@ -4859,6 +4847,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const progress = byId("soloProgress"); if (progress) progress.innerHTML = renderSeatProgress(seat);
     if (activeTab === "cabin") { rememberMapScroll(); byId("mainView").innerHTML = viewCleanCabin(); restoreMapScroll(); }
     refreshGuestSummary(seat);
+    if (key === "cvu") byId("sheetContent").querySelector(".wish-preview").textContent = wishPreview(seat);
   });
   byId("modalBack").addEventListener("click",e => {
     if (e.target.id === "modalBack" || e.target.closest("[data-close-modal]")) { closeModal(); return; }
