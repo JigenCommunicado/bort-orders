@@ -1784,6 +1784,12 @@ function renderReadback() {
   const section = (heading,rows) => rows ? `<section class="entry-readback-section"><h3>${heading}</h3><dl>${rows}</dl></section>` : "";
   const courses = (S.spec2Code ? [1,2] : [1]).map(n => {
     const c = seat["s"+n];
+    if (hasSoupService(SPECS[S['spec'+n+'Code']])) {
+      return section('Питание ' + n, row('Салат',c.salad ? [c.salad] : []) + row('Закуска',c.z ? [c.z] : []) +
+        row('Суп',c.soup ? [c.soup] : []) + row('Горячее блюдо',c.m ? [c.m] : []) +
+        row('Напитки к закуске',drinkChoices(c,'zd')) + row('Напитки к горячему',drinkChoices(c,'md')) +
+        row('Горячий напиток',drinkChoices(c,'t')) + row('Добавки',c.tAddons || []) + row('Десерт',c.dessert ? [c.dessert] : []));
+    }
     return section(label("Питание", "Meal service") + " " + n,
       row(label("Закуска","Starter"), c.z ? [c.z] : []) + row(label("Напитки к закуске","Drinks with starter"),drinkChoices(c,"zd")) +
       row(label("Горячее","Main course"), c.m ? [c.m] : []) + row(label("Напитки к горячему","Drinks with main course"),drinkChoices(c,"md")) +
@@ -2228,7 +2234,7 @@ function pairGuestFields(seat) {
 }
 function pairReadback(seat, id) {
   const hasOrder = drinkChoices(seat,'ap').length || hasCourseOrder(seat.s1) || (S.spec2Code && hasCourseOrder(seat.s2));
-  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n])}</p>`).join('')}${seatSafetyNotice(seat)}${seat.tablet !== undefined ? `<p>ЦВУ: ${tabletLabel(seat)}</p>` : ''}<button type="button" class="chip${pairOrder.checked.has(id) ? ' on' : ''}" data-pair-check="${esc(id)}" aria-pressed="${pairOrder.checked.has(id)}">${pairOrder.checked.has(id) ? '✓ Сверено' : 'Отметить сверку'} · ${esc(id)}</button> <button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
+  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n],SPECS[S['spec'+n+'Code']])}</p>`).join('')}${seatSafetyNotice(seat)}${seat.tablet !== undefined ? `<p>ЦВУ: ${tabletLabel(seat)}</p>` : ''}<button type="button" class="chip${pairOrder.checked.has(id) ? ' on' : ''}" data-pair-check="${esc(id)}" aria-pressed="${pairOrder.checked.has(id)}">${pairOrder.checked.has(id) ? '✓ Сверено' : 'Отметить сверку'} · ${esc(id)}</button> <button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
 }
 function renderPairOrder() {
   const p = pairOrder, root = document.getElementById('pairWorkspace');
@@ -3831,15 +3837,17 @@ function renderCourseStep(svcNum) {
 
   return `
     ${seatSafetyNotice(s)}
+    ${hasSoupService(sp) ? `<p class="subtle">${SOUP_SERVICE_ORDER}</p><details class="order-extra" data-order-extra="aperitif"><summary>Аперитив <span>${esc(drinkText(s,"ap") || "Выбрать")}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>` : ""}
     ${renderMealExtras(sp, sv, prefix)}
     <!-- Закуска -->
     <div class="field-group">
       <div class="field-label">
         <span>Закуска (${esc(sp.code)})</span>
-        ${sp.soup ? `<span style="color:var(--gold);">🥣 + Суп</span>` : ""}
       </div>
       <div class="dish-list">${zListHtml}</div>
     </div>
+
+    ${renderMealExtrasAfterStarter(sp, sv, prefix)}
 
     <!-- Горячее блюдо -->
     ${mStats.length ? `
@@ -3871,6 +3879,7 @@ function renderCourseStep(svcNum) {
       ${renderHotDrinkOptions(sv, prefix)}
     </div>
     </details>
+    ${renderDessert(sp, sv, prefix)}
     ${renderWishes(s, Boolean(pairOrder))}
     ${renderServiceStatus(svcNum, sv)}
   `;
@@ -4080,7 +4089,8 @@ function viewCleanGalley() {
   const courseBlock = n => {
     const sp = SPECS[S["spec"+n+"Code"]];
     if (!sp) return "";
-    const dishes = ["m","z"].map(field => {
+    const soupService = hasSoupService(sp);
+    const dishBlock = field => {
       const stats = getCourseDishStats(n,field);
       if (!stats.length) return "";
       return `<h3 style="font-size:13px;margin-top:18px">${field === "m" ? "Горячее · к разогреву только «Сейчас»" : "Закуски"}</h3>${stats.map(dish => {
@@ -4091,7 +4101,7 @@ function viewCleanGalley() {
         });
         return `<div class="galley-row"><div class="galley-row-top"><strong>${esc(dish.short)}</strong><span class="${dish.rem < 0 ? "galley-warning" : ""}">${dish.ordered}/${dish.loaded}</span></div>${groupLabels(groups)}${dish.rem < 0 ? `<p class="galley-warning subtle">⚠ Не хватает ${-dish.rem} порц. Уточните загрузку или замените заказ.</p>` : ""}</div>`;
       }).join("")}`;
-    }).join("");
+    };
     const drinks = new Map(), hot = new Map(), addons = new Map(), extras = new Map();
     const add = (list,name,status,seatLabel) => {
       if (!list.has(name)) list.set(name,{now:[],later:[],served:[]});
@@ -4107,7 +4117,7 @@ function viewCleanGalley() {
       const seat = S.seats[id]; if (!seat) return;
       const course = seat["s"+n], status = groupFor(seat,course);
       if (typeof serviceExtraRows === "function") {
-        for (const [title,value] of serviceExtraRows(course)) addExtra(title,value,status,id);
+        for (const [title,value] of serviceExtraRows(course)) if (!soupService || title !== "Подача") addExtra(title,value,status,id);
       }
       for (const [field,label] of [["zd","к закуске"],["md","к горячему"]]) {
         for (const name of drinkChoices(course,field)) add(drinks,name,status,`${id} (${label})`);
@@ -4117,8 +4127,10 @@ function viewCleanGalley() {
       if (hotChoices.length) for (const name of course.tAddons || []) add(addons,name,status,id);
     });
     const rows = list => [...list].map(([name,groups]) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
-    const extraRows = [...extras.values()].map(({title,name,groups}) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(title)}: ${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
-    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Дополнительные позиции и формат подачи</h3>${extraRows || '<p class="subtle">Дополнительные позиции не заказаны</p>'}<h3 style="font-size:13px;margin-top:20px">Напитки к блюдам</h3>${rows(drinks) || '<p class="subtle">Нет заказов напитков к блюдам</p>'}<section class="galley-hot"><h3>Горячие напитки</h3>${rows(hot) || '<p class="subtle">Нет заказов горячих напитков</p>'}<h4>Добавки · по креслам</h4>${rows(addons) || '<p class="subtle">Добавки не заказаны</p>'}</section></section>`;
+    const renderExtras = (titleFilter) => [...extras.values()].filter(({title}) => !titleFilter || title === titleFilter).map(({title,name,groups}) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(title)}: ${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
+    const extraRows = renderExtras();
+    const orderedDishes = soupService ? `<p class="subtle">${SOUP_SERVICE_ORDER}</p>${renderExtras('Салат')}${dishBlock('z')}${renderExtras('Суп')}${dishBlock('m')}` : dishBlock('m') + dishBlock('z');
+    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${orderedDishes}${!soupService ? `<h3 style="font-size:13px;margin-top:20px">Дополнительные позиции и формат подачи</h3>${extraRows || '<p class="subtle">Дополнительные позиции не заказаны</p>'}` : ""}<h3 style="font-size:13px;margin-top:20px">Напитки к блюдам</h3>${rows(drinks) || '<p class="subtle">Нет заказов напитков к блюдам</p>'}<section class="galley-hot"><h3>Горячие напитки</h3>${rows(hot) || '<p class="subtle">Нет заказов горячих напитков</p>'}<h4>Добавки · по креслам</h4>${rows(addons) || '<p class="subtle">Добавки не заказаны</p>'}</section>${soupService ? renderExtras('Десерт') : ''}</section>`;
   };
   const aperitifs = Object.create(null);
   const cocktailCounts = Object.create(null);
@@ -4140,7 +4152,7 @@ function viewCleanGalley() {
   const attention = ids.filter(id => S.seats[id] && (S.seats[id].allergy || S.seats[id].cvu));
   return `<section class="section-heading"><div><p class="eyebrow">КООРДИНАЦИЯ ОБСЛУЖИВАНИЯ</p><h1>Кухня</h1><p class="subtle">Сейчас, позже и уже подано — отдельно для каждого питания</p></div></section>
     ${attention.length ? `<div class="card" style="margin-bottom:18px"><h2 style="font-size:16px">⚠ Особые пожелания</h2>${attention.map(id => `<div class="galley-row"><strong>${esc(id)} · ${esc(S.seats[id].name)}</strong>${S.seats[id].allergy ? `<span class="galley-warning">Аллергии: ${esc(S.seats[id].allergy)}</span>` : ""}${S.seats[id].cvu ? `<span>${esc(S.seats[id].cvu)}</span>` : ""}</div>`).join("")}<p class="safety-note">Безопасность питания проверяется по актуальной ТТК и маркировке, не по этому приложению.</p></div>` : ""}
-    <div class="grid-2">${courseBlock(1)}${courseBlock(2)}<section class="card"><h2 style="font-size:18px">Аперитивы</h2><p class="subtle">Полный список заказов; отдельная отметка подачи аперитива не ведётся.</p>${Object.entries(aperitifs).map(([name,seats]) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(name)}</strong><b>${seats.length}</b></div><p class="subtle">Кресла: ${seats.join(", ")}</p></div>`).join("") || '<p class="subtle">Пока нет заказов</p>'}</section><section class="card"><h2 style="font-size:18px">Рецепты коктейлей</h2><p class="subtle">Все заказанные порции за рейс, включая поданные. Рецепт указан на одну порцию; сверьте с актуальной картой.</p>${Object.entries(cocktailCounts).map(([name,count]) => { const drink = DRINKS_DB.find(d => d.short === name); return `<div class="galley-row"><strong>${esc(name)} · ${count} порц.</strong><p class="subtle">${esc(drink.recipe || drink.desc)}</p></div>`; }).join("") || '<p class="subtle">Коктейли не заказаны</p>'}</section></div>`;
+    <div class="grid-2">${hasSoupService(SPECS[S.spec1Code]) || hasSoupService(SPECS[S.spec2Code]) ? "" : courseBlock(1)+courseBlock(2)}<section class="card"><h2 style="font-size:18px">Аперитивы</h2><p class="subtle">Полный список заказов; отдельная отметка подачи аперитива не ведётся.</p>${Object.entries(aperitifs).map(([name,seats]) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(name)}</strong><b>${seats.length}</b></div><p class="subtle">Кресла: ${seats.join(", ")}</p></div>`).join("") || '<p class="subtle">Пока нет заказов</p>'}</section>${hasSoupService(SPECS[S.spec1Code]) || hasSoupService(SPECS[S.spec2Code]) ? courseBlock(1)+courseBlock(2) : ''}<section class="card"><h2 style="font-size:18px">Рецепты коктейлей</h2><p class="subtle">Все заказанные порции за рейс, включая поданные. Рецепт указан на одну порцию; сверьте с актуальной картой.</p>${Object.entries(cocktailCounts).map(([name,count]) => { const drink = DRINKS_DB.find(d => d.short === name); return `<div class="galley-row"><strong>${esc(name)} · ${count} порц.</strong><p class="subtle">${esc(drink.recipe || drink.desc)}</p></div>`; }).join("") || '<p class="subtle">Коктейли не заказаны</p>'}</section></div>`;
 }
 
 /* ============================================================================
@@ -4197,7 +4209,7 @@ function buildA5TableHtml() {
     const group = ids.slice(offset, offset + 6);
     blocks.push(`<section class="print-page"><h2>${S.manualSetup ? `База ${esc(SPECS[S.spec1Code]?.source?.base || '—')} · ${esc(CABIN_PRESETS[S.presetKey]?.name || 'Салон')}` : `FV ${esc(S.flightNo)} · ${esc(S.date)} · ${esc(fl.route)}`}</h2><p>Цикл ${S.cycle} · Кресла ${group[0]}–${group[group.length-1]} · ${esc(S.spec1Code)}${S.spec2Code ? " / " + esc(S.spec2Code) : ""}</p>
       <table class="orders-table"><thead><tr><th scope="col">Кресло / гость</th><th scope="col">Аперитив / пожелания</th><th scope="col">Питание 1</th>${S.spec2Code ? '<th scope="col">Питание 2</th>' : ""}</tr></thead><tbody>
-      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc(seat.name)}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? "<br>Планшет: " + esc(tabletLabel(seat)) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
+      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc(seat.name)}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? "<br>Планшет: " + esc(tabletLabel(seat)) : ""}</td><td>${coursePrint(seat.s1,SPECS[S.spec1Code])}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2,SPECS[S.spec2Code])+"</td>" : ""}</tr>`; }).join("")}
       </tbody></table><p class="print-foot">Конфиденциально · Данные пассажиров · Страница ${Math.floor(offset/6)+1}/${Math.ceil(ids.length/6)}</p></section>`);
   }
   return blocks.join("");
@@ -4213,6 +4225,11 @@ function buildOrderText() {
     out.push(`${id} ${seat.name} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? " | Планшет: "+tabletLabel(seat) : ""}`);
     [1,2].filter(n => n === 1 || S.spec2Code).forEach(n => {
       const sv = seat["s"+n];
+      if (hasSoupService(SPECS[S["spec"+n+"Code"]])) {
+        const ordered = [["Салат",sv.salad],["Закуска",sv.z],["Суп",sv.soup],["Горячее блюдо",sv.m],["Напитки к закуске",drinkText(sv,"zd")],["Напитки к горячему",drinkText(sv,"md")],["Горячий напиток",drinkText(sv,"t")],["Добавки",sv.tAddons?.join(" · ")],["Десерт",sv.dessert]];
+        out.push(`  П${n}: ${ordered.filter(([,value]) => value).map(([label,value]) => `${label}: ${value}`).join(" | ")} | ${statusLabel(sv.status)}`);
+        return;
+      }
       const extras = typeof serviceExtraRows === "function" ? serviceExtraRows(sv).map(([title,value]) => `${title}: ${value || "—"}`).join("; ") : "";
       out.push(`  П${n}: ${sv.z || "—"} (напитки: ${drinkText(sv,"zd") || "—"}) | ${sv.m || "—"} (напитки: ${drinkText(sv,"md") || "—"}) | ${drinkText(sv,"t") || "—"}${sv.tAddons?.length ? " (добавки: " + sv.tAddons.join(" · ") + ")" : ""}${extras ? " | " + extras : ""} | ${statusLabel(sv.status)}`);
     });
@@ -4430,7 +4447,7 @@ function mealChoices(spec) {
     if (legacyCode === 'HL200.2') extra.salad.push('Салат с грушей и адыгейским сыром');
   }
   if (spec.dessert?.trim()) extra.dessert.push(...spec.dessert.split(/\s+\/\s+/), DESSERT_DECLINED);
-  if (spec.starters?.length && spec.mains?.length && getFlightContext().isOver2h) extra.serving.push('Вместе','Раздельно');
+  if (spec.starters?.length && spec.mains?.length && !extra.soup.length && getFlightContext().isOver2h) extra.serving.push('Вместе','Раздельно');
   return extra;
 }
 function serviceExtraRows(course) {
@@ -4444,9 +4461,19 @@ function serviceChoiceGroup(label, path, values, selected) {
 function renderTablet(seat) {
   return serviceChoiceGroup('ЦВУ · бортовой планшет','tablet',[['issued','Выдано'],['returned','Не выдано']],seat.tablet ? 'issued' : 'returned');
 }
+function hasSoupService(spec) { return !!(spec?.soup || spec?.supplements?.some(item => /(?:^|\s)суп(?:[\s-]|$)/i.test(item.short))); }
+const SOUP_SERVICE_ORDER = 'Аперитив → салат → закуска → суп → горячее блюдо → горячий напиток → десерт';
 function renderMealExtras(spec, course, prefix) {
   const choices = mealChoices(spec);
-  return [['soup','Суп'],['salad','Салат'],['serving','Подача закуски и горячего'],['dessert','Десерт']].map(([key,label]) => serviceChoiceGroup(label,prefix+key,choices[key].map(value => [value,value]),course[key])).join('');
+  return serviceChoiceGroup('Салат',prefix+'salad',choices.salad.map(value => [value,value]),course.salad);
+}
+function renderMealExtrasAfterStarter(spec, course, prefix) {
+  const choices = mealChoices(spec);
+  return serviceChoiceGroup('Суп',prefix+'soup',choices.soup.map(value => [value,value]),course.soup) + serviceChoiceGroup('Подача закуски и горячего',prefix+'serving',choices.serving.map(value => [value,value]),course.serving);
+}
+function renderDessert(spec, course, prefix) {
+  const choices = mealChoices(spec);
+  return serviceChoiceGroup('Десерт',prefix+'dessert',choices.dessert.map(value => [value,value]),course.dessert);
 }
 function renderWishes(seat, pair = false) {
   const tags = ['Лёд 3 куб.','Лимон','Орехи NUTS','Канапе CA2','Дижестив Коньяк 75мл','Подать позже'];
@@ -4462,7 +4489,13 @@ function seatSafetyNotice(seat) {
 function renderServiceStatus(n, course) {
   return `<div class="service-status"><p class="field-label">Статус питания ${n}</p><div class="chips" role="group" aria-label="Статус питания ${n}">${[["pending","Принят"],["later","◷ Позже"],["served","✓ Подано"]].map(([key,label]) => `<button type="button" class="chip${course.status === key ? " on" : ""}" data-course-status="${n}:${key}" aria-pressed="${course.status === key}">${label}</button>`).join("")}</div></div>`;
 }
-function coursePrint(course) {
+function coursePrint(course, spec) {
+  if (hasSoupService(spec)) {
+    const ordered = [['Салат',course.salad],['Закуска',course.z],['Суп',course.soup],['Горячее блюдо',course.m],
+      ['Напитки к закуске',drinkText(course,'zd')],['Напитки к горячему',drinkText(course,'md')],
+      ['Горячий напиток',drinkText(course,'t')],['Добавки',course.tAddons?.join(' · ')],['Десерт',course.dessert]];
+    return `<strong>${esc(statusLabel(course.status))}</strong>` + ordered.filter(([,value]) => value).map(([label,value]) => `<br>${esc(label)}: ${esc(value)}`).join('');
+  }
   const extra = typeof serviceExtraRows === "function" ? serviceExtraRows(course) : [];
   const extraText = extra.map(([title, value]) => `<br>${esc(title)}: ${esc(value || "—")}`).join("");
   return `<strong>${esc(statusLabel(course.status))}</strong><br>Закуска: ${esc(course.z || "—")}<br>Напитки: ${esc(drinkText(course,"zd") || "—")}<br>Горячее: ${esc(course.m || "—")}<br>Напитки: ${esc(drinkText(course,"md") || "—")}<br>Чай / кофе: ${esc(drinkText(course,"t") || "—")}${course.tAddons?.length ? `<br>Добавки: ${esc(course.tAddons.join(" · "))}` : ""}${extraText}`;
