@@ -1540,7 +1540,7 @@ function getFlightContext() {
     const codes = [S.spec1Code,S.spec2Code].map(k => k ? (SPECS[k]?.displayCode || k).replace(/\.\d$/, '') : '');
     const hub = spec?.source?.base || '';
     const fl = {no:'',route:hub,dur:'',ac:CABIN_PRESETS[S.presetKey]?.name || '',cSeats:getAllSeatIds().length,preset:S.presetKey,cCode:codes.filter(Boolean).join(' / '),s1:codes[0],s2:codes[1],extras:'',note:'Ручная настройка питания. Продолжительность не указана.'};
-    return {fl,hub,isOver2h:false,durationUnknown:true};
+    return {fl,hub,isOver2h:S.manualDuration === "long",durationUnknown:!S.manualDuration};
   }
   if (!S.schedule) return legacyFlightContext();
   const v=scheduleVariant(S.schedule.variantId);
@@ -1556,6 +1556,7 @@ function normalizeState(raw,legacy=false) {
   if (raw.manualSetup === true) {
     if (raw.schedule != null) throw new Error('Ручная настройка не может иметь документальный вариант');
     result.manualSetup = true;
+    if (["short","long"].includes(raw.manualDuration)) result.manualDuration = raw.manualDuration;
   }
   if (raw.schedule!=null) {
     const meta=raw.schedule;
@@ -1769,7 +1770,7 @@ function requestSeatForward(opener, allowCabin = false) {
     // The existing dialog observer removes inert after the close event.
     queueMicrotask(focus);
   };
-  if (!hasItems && !seat.allergy && !seat.cvu && !seat.wake) { move(); return; }
+  if (!hasItems && !seat.allergy && !seat.cvu && !seat.wake && seat.tablet !== true && !seat.s1.serving && !(S.spec2Code && seat.s2.serving)) { move(); return; }
   if (document.getElementById("modalBack").classList.contains("open")) return;
   pendingReadback = { key:flightKey(S), seat:activeSeatId, destination, move };
   openEntryDialog("readback",opener,`Сверка заказа · ${activeSeatId}`,`<div class="entry-readback-tools"><p class="subtle" id="readbackHint">Повторите заказ гостю перед переходом.</p></div><div id="readbackItems"></div><div class="entry-dialog-actions"><button type="button" class="btn" data-close-modal>К заказу</button><button type="button" class="btn primary" id="btnConfirmReadback">${destination ? `Подтвердить → ${esc(destination)}` : "Подтвердить и к салону"}</button></div>`);
@@ -1786,14 +1787,14 @@ function renderReadback() {
     return section(label("Питание", "Meal service") + " " + n,
       row(label("Закуска","Starter"), c.z ? [c.z] : []) + row(label("Напитки к закуске","Drinks with starter"),drinkChoices(c,"zd")) +
       row(label("Горячее","Main course"), c.m ? [c.m] : []) + row(label("Напитки к горячему","Drinks with main course"),drinkChoices(c,"md")) +
-      row(label("Чай / кофе","Tea / coffee"),drinkChoices(c,"t")) + row("Добавки",c.tAddons || []));
+      row(label("Чай / кофе","Tea / coffee"),drinkChoices(c,"t")) + row("Добавки",c.tAddons || []) + (typeof serviceExtraRows === "function" ? serviceExtraRows(c).map(([title,value]) => `<div><dt>${esc(title)}</dt><dd>${esc(value || "—")}</dd></div>`).join("") : ""));
   }).join("");
   const items = document.getElementById("readbackItems");
   items.lang = "ru";
   const drinks = drinkChoices(seat,"ap");
   items.innerHTML = (drinks.length ? section(label("Аперитивы","Aperitifs"),row(label("Напитки","Drinks"),drinks)) : "") + courses || `<p class="subtle">${label("Блюда и напитки пока не выбраны.","No food or drinks selected yet.")}</p>`;
   // Free text stays in the original language; never send it for translation.
-  if (seat.allergy || seat.cvu || seat.wake) items.insertAdjacentHTML("beforeend", `<div class="entry-readback-notes" lang="ru">${seatSafetyNotice(seat)}${seat.wake && seat.wake !== "Не будить" ? `<div class="seat-request">Режим отдыха: ${esc(seat.wake)}</div>` : ""}</div>`);
+  if (seat.allergy || seat.cvu || seat.wake || seat.tablet !== undefined) items.insertAdjacentHTML("beforeend", `<div class="entry-readback-notes" lang="ru">${seatSafetyNotice(seat)}${seat.wake && seat.wake !== "Не будить" ? `<div class="seat-request">Режим отдыха: ${esc(seat.wake)}</div>` : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? `<div class="seat-request">Планшет: ${esc(tabletLabel(seat))}</div>` : ""}</div>`);
   const warning = document.createElement("p");
   warning.id = "readbackSaveWarning"; warning.className = "safety-note"; warning.lang = "ru"; warning.setAttribute("role","status");
   items.append(warning);
@@ -1925,6 +1926,7 @@ function openManualMealPicker(opener) {
       <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">4 · Код рациона</span><span class="subtle" id="manualMealStatus" role="status"></span></div><div class="manual-meal-code-grid" id="manualMealCodeGrid"></div></div>
       <div class="manual-meal-group"><div class="manual-meal-label-row"><span class="manual-meal-label">5 · Загружено рационов</span><span class="subtle">при необходимости</span></div><input class="in" type="number" id="manualMealRations" min="1" max="60" inputmode="numeric" placeholder="Например, 18" aria-label="Количество загруженного питания"></div>
       <div class="manual-meal-group"><label class="second-meal-toggle"><input type="checkbox" name="manualMealEnableSecond"${existingSecond ? ' checked' : ''}> Добавить 2-е питание</label><select class="in" name="manualMealSecond" aria-label="Второй рацион" hidden></select></div>
+      <label class="manual-meal-group field-group"><span class="field-label">Длительность рейса</span><select class="in" id="manualMealDuration">${[["","Не указана"],["short","До 2 часов включительно"],["long","Свыше 2 часов"]].map(([key,label]) => `<option value="${key}"${(S.manualDuration || "") === key ? " selected" : ""}>${label}</option>`).join("")}</select></label>
       <p class="manual-meal-summary" id="manualMealSummary" aria-live="polite"></p>
       <details class="manual-meal-details"><summary>Проверка базы загрузки</summary><p class="safety-note">Аэропорт вылета и база загрузки могут отличаться. Проверьте фактическую загрузку.</p></details>
     </div>
@@ -1932,7 +1934,7 @@ function openManualMealPicker(opener) {
   </form>`);
   renderManualMealOptions();
 }
-function applyManualMealSelection(base, cycle, code, presetKey, rationValue, secondCode) {
+function applyManualMealSelection(base, cycle, code, presetKey, rationValue, secondCode, duration = S.manualDuration || "") {
   const spec = SPECS[code];
   const preset = CABIN_PRESETS[presetKey];
   const rations = String(rationValue ?? "").trim() ? Number(rationValue) : (presetKey === S.presetKey ? Number(S.rations) : preset?.rations);
@@ -1954,7 +1956,8 @@ function applyManualMealSelection(base, cycle, code, presetKey, rationValue, sec
   // Старый и квалифицированный коды одного рациона не требуют сброса заказов.
   if (secondCode && secondCode === qualifiedSecond && S.spec2Code && !S.spec2Code.includes(':')) secondCode = S.spec2Code;
   const secondChanged = secondCode !== S.spec2Code;
-  if (!menuChanged && !secondChanged && !presetChanged && !quantityChanged && !S.schedule && S.manualSetup) { closeModal(); return; }
+  const durationChanged = duration !== (S.manualDuration || "");
+  if (!menuChanged && !secondChanged && !presetChanged && !quantityChanged && !durationChanged && !S.schedule && S.manualSetup) { closeModal(); return; }
   const warning = `${presetChanged ? " Компоновка салона будет заменена." : ""}${quantityChanged ? " Количество загрузки будет обновлено." : ""}${menuChanged ? " Заказы первого питания будут сброшены." : " Заказы первого питания сохранятся."}${secondChanged && S.spec2Code ? " Заказы второго питания будут сброшены." : ""}`;
   if (!confirm(`Применить ${spec.displayCode || code}${secondCode ? ' и ' + (SPECS[secondCode].displayCode || secondCode) : ''} (${base}, ${preset.name}, цикл ${cycle}, ${rations} рационов)?${warning} Данные гостей сохранятся.`)) return;
   const before = clone(S);
@@ -1979,6 +1982,9 @@ function applyManualMealSelection(base, cycle, code, presetKey, rationValue, sec
   // A manual specification is not a document-confirmed schedule variant.
   delete S.schedule;
   S.manualSetup = true;
+  if (["short","long"].includes(duration)) S.manualDuration = duration;
+  else delete S.manualDuration;
+  if (duration !== "long") for (const seat of Object.values(S.seats)) { seat.s1.serving = ""; seat.s2.serving = ""; }
   if (!saveState()) { S = before; renderAll(); return; }
   if (!S.spec2Code) serviceView = 1;
   activeSeatId = newIds.includes(activeSeatId) ? activeSeatId : newIds[0];
@@ -2015,7 +2021,7 @@ function initServiceFlow() {
       e.preventDefault();
       const form = e.target;
       if (document.getElementById("manualMealApply").disabled) return;
-      applyManualMealSelection(form.dataset.base,Number(form.dataset.cycle),form.dataset.code,form.dataset.preset,document.getElementById("manualMealRations")?.value,form.elements.manualMealEnableSecond.checked ? form.elements.manualMealSecond.value : "");
+      applyManualMealSelection(form.dataset.base,Number(form.dataset.cycle),form.dataset.code,form.dataset.preset,document.getElementById("manualMealRations")?.value,form.elements.manualMealEnableSecond.checked ? form.elements.manualMealSecond.value : "", document.getElementById("manualMealDuration").value);
       return;
     }
     if (e.target.id !== "flightNumberForm") return;
@@ -2218,11 +2224,11 @@ function withPairSeat(id, action) {
 }
 function pairGuestFields(seat) {
   const field = (key,label,max) => `<label class="field-group"><span class="field-label">${label}</span>${key === 'cvu' ? `<textarea class="ta" data-pair-field="${key}" maxlength="${max}">${esc(seat[key])}</textarea>` : `<input class="in" data-pair-field="${key}" maxlength="${max}" value="${esc(seat[key])}" autocomplete="off">`}</label>`;
-  return field('name','Имя',120) + field('allergy','Аллергии и ограничения (со слов гостя)',500) + field('cvu','Пожелания',1000) + `<div class="field-group"><p class="field-label">Режим отдыха</p><div class="chips">${['Будить','Не будить'].map(value => `<button type="button" class="chip${seat.wake === value ? ' on' : ''}" data-path="wake" data-val="${value}">${value}</button>`).join('')}</div></div><details data-order-extra="aperitif" class="order-extra"><summary>Аперитивы · ${esc(drinkText(seat,'ap') || 'Выбрать')}</summary>${renderDrinkSelector('ap',drinkChoices(seat,'ap'))}</details>`;
+  return field('name','Имя',120) + field('allergy','Аллергии и ограничения (со слов гостя)',500) + renderTablet(seat) + renderWishes(seat,true) + `<div class="field-group"><p class="field-label">Режим отдыха</p><div class="chips">${['Будить','Не будить'].map(value => `<button type="button" class="chip${seat.wake === value ? ' on' : ''}" data-path="wake" data-val="${value}">${value}</button>`).join('')}</div></div><details data-order-extra="aperitif" class="order-extra"><summary>Аперитивы · ${esc(drinkText(seat,'ap') || 'Выбрать')}</summary>${renderDrinkSelector('ap',drinkChoices(seat,'ap'))}</details>`;
 }
 function pairReadback(seat, id) {
   const hasOrder = drinkChoices(seat,'ap').length || hasCourseOrder(seat.s1) || (S.spec2Code && hasCourseOrder(seat.s2));
-  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n])}</p>`).join('')}${seatSafetyNotice(seat)}<button type="button" class="chip${pairOrder.checked.has(id) ? ' on' : ''}" data-pair-check="${esc(id)}" aria-pressed="${pairOrder.checked.has(id)}">${pairOrder.checked.has(id) ? '✓ Сверено' : 'Отметить сверку'} · ${esc(id)}</button> <button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
+  return `<p>${hasOrder ? 'Проверьте выбор с гостем.' : 'Блюда и напитки не выбраны.'}</p><p><strong>Аперитивы:</strong> ${esc(drinkText(seat,'ap') || '—')}${seat.wake ? ` · ${esc(seat.wake)}` : ''}</p>${[1,2].filter(n => n === 1 || S.spec2Code).map(n => `<p><strong>Питание ${n}</strong><br>${coursePrint(seat['s'+n])}</p>`).join('')}${seatSafetyNotice(seat)}${seat.tablet !== undefined ? `<p>ЦВУ: ${tabletLabel(seat)}</p>` : ''}<button type="button" class="chip${pairOrder.checked.has(id) ? ' on' : ''}" data-pair-check="${esc(id)}" aria-pressed="${pairOrder.checked.has(id)}">${pairOrder.checked.has(id) ? '✓ Сверено' : 'Отметить сверку'} · ${esc(id)}</button> <button type="button" class="btn" data-pair-edit="${esc(id)}">К заказу ${esc(id)}</button>`;
 }
 function renderPairOrder() {
   const p = pairOrder, root = document.getElementById('pairWorkspace');
@@ -2274,6 +2280,7 @@ function initTogetherOrder() {
       p.checked.clear();
       const seat = p.draft[id];
       if (data.teaAddon) p.dirty = toggleTeaAddon(seat[p.step],data.teaAddon) || p.dirty;
+      else if (data.addCvu) { addWish(seat,data.addCvu); p.dirty = true; }
       else if (data.path) p.dirty = withPairSeat(id,() => applyOrderChoice(data.path,data.val)) || p.dirty;
       else if (data.dcat) (p.views[id] ||= {targets:{1:'',2:''}}).cat = data.dcat;
       else if (data.drinkTarget) { const [n,field] = data.drinkTarget.split(':'); p.views[id].targets[n] = field; }
@@ -2355,6 +2362,7 @@ function finishOrderEntryView(view) {
   const selected = course && [course.z && ("Зак: " + displayName(course.z)),course.m && ("Гор: " + displayName(course.m))].filter(Boolean).join(" · ");
   context.innerHTML = `<div class="pos-summary-head"><strong>${esc(currentLabel)}</strong><span>${index + 1} из ${ids.length}</span></div><div class="pos-summary-main"><span class="pos-summary-guest">${esc(guestLabel)}</span>${guestFlags.length ? `<span class="pos-summary-flags">${esc(guestFlags.join(" · "))}</span>` : ""}</div><div class="pos-service-states">${serviceRows}</div>${activeStep !== "guest" && selected ? `<div class="pos-summary-selection"><span>Выбрано</span><strong>${esc(selected)}</strong></div>` : ""}`;
   summary.append(context);
+  refreshGuestSummary(seat);
   summary.insertAdjacentHTML("beforeend", `<div id="soloProgress">${renderSeatProgress(seat)}</div>`);
   const warning = document.createElement("p"); warning.id = "sheetSaveWarning"; warning.setAttribute("role","status");
   summary.append(warning); refreshSheetSaveWarning();
@@ -2376,6 +2384,17 @@ function finishOrderEntryView(view) {
     }
   }
   box.scrollTop = view ? view.scroll : 0;
+}
+function refreshGuestSummary(seat) {
+  const name = document.querySelector('#sheetQuickSummary .pos-summary-guest');
+  if (!name) return;
+  name.textContent = seat.name;
+  let flags = name.parentElement.querySelector('.pos-summary-flags');
+  if (!flags) {
+    flags = document.createElement('span'); flags.className = 'pos-summary-flags'; name.after(flags);
+  }
+  flags.textContent = [seat.allergy && 'Есть ограничения', seat.wake && seat.wake !== 'Будить' && seat.wake, seat.cvu && 'Есть пожелание', seat.tablet && 'ЦВУ выдано'].filter(Boolean).join(' · ');
+  flags.hidden = !flags.textContent;
 }
 function refreshSheetSaveWarning() {
   const warning = document.getElementById("sheetSaveWarning");
@@ -2536,7 +2555,7 @@ function flightReviewBody() {
       }
     }
     const evidence = "Встроенное меню. Перед обслуживанием сверяйте актуальность рациона и фактическую загрузку.";
-    return `<div class="flight-review-meal"><strong>Питание ${n} · ${esc(code)}</strong><small>${esc(spec.title)} · цикл ${esc(spec.cycle)}</small><small class="flight-review-manual">${evidence}</small>${spec.supplements?.length ? `<details><summary>Дополнительные салаты и супы · ${spec.supplements.length}</summary><p class="flight-review-manual">Отдельные позиции, не альтернативы закуски. Наличие и ротацию сверяйте с загрузкой. Индивидуальный выбор этих позиций в заказе пока не предусмотрен.</p><ul>${spec.supplements.map(dish => `<li><strong>${esc(dish.short)}</strong><small>${esc(dish.full)}</small></li>`).join('')}</ul></details>` : ''}${spec.butter ? `<small>${esc(spec.butter)}</small>` : ""}</div>`;
+    return `<div class="flight-review-meal"><strong>Питание ${n} · ${esc(code)}</strong><small>${esc(spec.title)} · цикл ${esc(spec.cycle)}</small><small class="flight-review-manual">${evidence}</small>${spec.supplements?.length ? `<details><summary>Дополнительные салаты и супы · ${spec.supplements.length}</summary><p class="flight-review-manual">Отдельные позиции, не альтернативы закуски. Наличие и ротацию сверяйте с загрузкой. Выбор этих позиций отмечается отдельно для каждого гостя.</p><ul>${spec.supplements.map(dish => `<li><strong>${esc(dish.short)}</strong><small>${esc(dish.full)}</small></li>`).join('')}</ul></details>` : ''}${spec.butter ? `<small>${esc(spec.butter)}</small>` : ""}</div>`;
   }).join("");
   const stockText = !positions ? 'Встроенные позиции блюд отсутствуют; загрузка не рассчитана.'
     : unspecified ? `Введены количества: ${entered} из ${positions} позиций. Для ${unspecified} позиций доли в источнике не указаны: до ручного ввода показан 0, а не подтверждённая загрузка.`
@@ -3406,8 +3425,8 @@ function saveState() {
 function blankSeat() {
   return {
     title: "", name: "", ap: "", wake: "", cvu: "", allergy: "",
-    s1: { z: "", zd: "", m: "", md: "", t: "", tAddons: [], status: "pending" },
-    s2: { z: "", zd: "", m: "", md: "", t: "", tAddons: [], status: "pending" }
+    s1: { z: "", zd: "", m: "", md: "", t: "", tAddons: [], dessert: "", soup: "", salad: "", serving: "", status: "pending" },
+    s2: { z: "", zd: "", m: "", md: "", t: "", tAddons: [], dessert: "", soup: "", salad: "", serving: "", status: "pending" }
   };
 }
 const BLANK_JSON = JSON.stringify(blankSeat());
@@ -3419,7 +3438,7 @@ function getSeat(id) {
 
 function isSeatUsed(id) {
   const seat = S.seats[id];
-  return !!seat && (!!(seat.title || seat.name || seat.ap || seat.wake || seat.cvu || seat.allergy) || hasCourseOrder(seat.s1) || hasCourseOrder(seat.s2) || seat.s1.status !== "pending" || seat.s2.status !== "pending");
+  return !!seat && (!!(seat.title || seat.name || seat.ap || seat.wake || seat.cvu || seat.allergy || seat.tablet === true || seat.s1.serving || seat.s2.serving) || hasCourseOrder(seat.s1) || hasCourseOrder(seat.s2) || seat.s1.status !== "pending" || seat.s2.status !== "pending");
 }
 
 function getLetters() {
@@ -3644,12 +3663,12 @@ function renderCleanSeatTile(seatObj) {
   const status = sv.status === "served" ? "✓ Подано" : later ? "◷ Позже" : hasCourseOrder(sv) ? "Принят" : "Нет заказа";
   const summary = sv.m || sv.z || seat.ap || "—";
   const guest = seat.name;
-  const accessible = `Кресло ${id}. ${guest}. ${summary}. ${status}${seat.allergy ? ". Аллергии: " + seat.allergy : ""}${seat.cvu ? ". Пожелания: " + seat.cvu : ""}`;
+  const accessible = `Кресло ${id}. ${guest}. ${summary}. ${status}${seat.tablet ? ". ЦВУ выдано" : ""}${seat.allergy ? ". Аллергии: " + seat.allergy : ""}${seat.cvu ? ". Пожелания: " + seat.cvu : ""}`;
   return `<button type="button" class="${classes}" data-seat="${esc(id)}" aria-label="${esc(accessible)}" aria-pressed="${pairSeatPressed(id)}" title="${esc(accessible)}">
     <span class="seat-row-top"><span class="seat-id">${esc(id)}</span><span class="seat-corner-badge">${seat.allergy ? uiIcon("alert") : seat.cvu ? uiIcon("note") : ""}</span></span>
     <span class="seat-guest-line">${esc(guest || "Гость")}</span>
     <span class="seat-order-line">${esc(displayName(summary))}</span>
-    <span class="seat-state"><span class="seat-state-full">${esc(status)}</span><span class="seat-state-compact" aria-hidden="true">${sv.status === "served" ? "Подано" : later ? "Позже" : hasCourseOrder(sv) ? "Принят" : "—"}</span></span>
+    <span class="seat-state"><span class="seat-state-full">${esc(status)}</span><span class="seat-state-compact" aria-hidden="true">${sv.status === "served" ? "Подано" : later ? "Позже" : hasCourseOrder(sv) ? "Принят" : "—"}</span>${seat.tablet ? '<span class="seat-tablet"> · ЦВУ ✓</span>' : ''}</span>
     ${seat.allergy ? '<span class="seat-alert">⚠ Аллергия</span>' : seat.cvu ? '<span class="seat-note">Есть пожелания</span>' : ""}
   </button>`;
 }
@@ -3812,11 +3831,12 @@ function renderCourseStep(svcNum) {
 
   return `
     ${seatSafetyNotice(s)}
+    ${renderMealExtras(sp, sv, prefix)}
     <!-- Закуска -->
     <div class="field-group">
       <div class="field-label">
         <span>Закуска (${esc(sp.code)})</span>
-        ${sp.soup ? `<span style="color:var(--gold);">+ Суп</span>` : ""}
+        ${sp.soup ? `<span style="color:var(--gold);">🥣 + Суп</span>` : ""}
       </div>
       <div class="dish-list">${zListHtml}</div>
     </div>
@@ -3847,11 +3867,11 @@ function renderCourseStep(svcNum) {
     <details class="order-extra" data-order-extra="tea"><summary>Чай / кофе <span>${esc(drinkText(sv,"t") || "Выбрать")}</span></summary><div class="field-group">
       <div class="field-label">
         <span>Чай / Кофе</span>
-        <span style="color:var(--gold); text-transform:none;">${esc(sp.dessert)}</span>
       </div>
       ${renderHotDrinkOptions(sv, prefix)}
     </div>
     </details>
+    ${renderWishes(s, Boolean(pairOrder))}
     ${renderServiceStatus(svcNum, sv)}
   `;
 }
@@ -3911,15 +3931,8 @@ function renderStepSheet() {
         <details class="order-extra" data-order-extra="aperitif"><summary>Выбор аперитива <span>${esc(drinkText(s,"ap") || "Выбрать")}</span></summary>${renderDrinkSelector("ap", drinkChoices(s,"ap"))}</details>
       </div>
 
-      <div class="field-group">
-        <div class="field-label"><span>${uiIcon("note")} Пожелания гостя</span></div>
-        <div class="chips" style="margin-bottom:4px;">
-          ${["Лёд 3 куб.", "Лимон", "Орехи NUTS", "Канапе CA2", "Дижестив Коньяк 75мл", "Подать позже"].map(tag =>
-            `<button type="button" class="chip" style="min-height:30px; font-size:11.5px; padding:3px 9px;" data-add-cvu="${esc(tag)}">+ ${esc(tag)}</button>`
-          ).join("")}
-        </div>
-        <textarea class="ta" id="inCvu" aria-label="Особые пожелания" maxlength="1000" placeholder="Особые пожелания гостя...">${esc(s.cvu)}</textarea>
-      </div>
+      ${renderTablet(s)}
+      ${renderWishes(s)}
 
       <div style="display:flex; justify-content:space-between; padding-top:4px;">
         <button type="button" class="btn danger" id="btnClearSeat">Очистить кресло</button>
@@ -4079,14 +4092,23 @@ function viewCleanGalley() {
         return `<div class="galley-row"><div class="galley-row-top"><strong>${esc(dish.short)}</strong><span class="${dish.rem < 0 ? "galley-warning" : ""}">${dish.ordered}/${dish.loaded}</span></div>${groupLabels(groups)}${dish.rem < 0 ? `<p class="galley-warning subtle">⚠ Не хватает ${-dish.rem} порц. Уточните загрузку или замените заказ.</p>` : ""}</div>`;
       }).join("")}`;
     }).join("");
-    const drinks = new Map(), hot = new Map(), addons = new Map();
+    const drinks = new Map(), hot = new Map(), addons = new Map(), extras = new Map();
     const add = (list,name,status,seatLabel) => {
       if (!list.has(name)) list.set(name,{now:[],later:[],served:[]});
       list.get(name)[status].push(seatLabel);
     };
+    const addExtra = (title,name,status,seatLabel) => {
+      if (name === undefined || name === null || name === "") return;
+      const key = `${title}\u0000${name}`;
+      if (!extras.has(key)) extras.set(key,{title,name,groups:{now:[],later:[],served:[]}});
+      extras.get(key).groups[status].push(seatLabel);
+    };
     ids.forEach(id => {
       const seat = S.seats[id]; if (!seat) return;
       const course = seat["s"+n], status = groupFor(seat,course);
+      if (typeof serviceExtraRows === "function") {
+        for (const [title,value] of serviceExtraRows(course)) addExtra(title,value,status,id);
+      }
       for (const [field,label] of [["zd","к закуске"],["md","к горячему"]]) {
         for (const name of drinkChoices(course,field)) add(drinks,name,status,`${id} (${label})`);
       }
@@ -4095,7 +4117,8 @@ function viewCleanGalley() {
       if (hotChoices.length) for (const name of course.tAddons || []) add(addons,name,status,id);
     });
     const rows = list => [...list].map(([name,groups]) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
-    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Напитки к блюдам</h3>${rows(drinks) || '<p class="subtle">Нет заказов напитков к блюдам</p>'}<section class="galley-hot"><h3>Горячие напитки</h3>${rows(hot) || '<p class="subtle">Нет заказов горячих напитков</p>'}<h4>Добавки · по креслам</h4>${rows(addons) || '<p class="subtle">Добавки не заказаны</p>'}</section></section>`;
+    const extraRows = [...extras.values()].map(({title,name,groups}) => `<div class="galley-row"><div class="galley-row-top"><strong>${esc(title)}: ${esc(name)}</strong><b>${groups.now.length + groups.later.length + groups.served.length}</b></div>${groupLabels(groups)}</div>`).join("");
+    return `<section class="card"><p class="eyebrow">ПИТАНИЕ ${n} · ${esc(sp.code)}</p><h2 style="font-size:20px;margin-top:6px">Разогрев и подача</h2><p class="subtle">Заказано / загружено. Уже поданные блюда не включены в «Сейчас».</p>${dishes}<h3 style="font-size:13px;margin-top:20px">Дополнительные позиции и формат подачи</h3>${extraRows || '<p class="subtle">Дополнительные позиции не заказаны</p>'}<h3 style="font-size:13px;margin-top:20px">Напитки к блюдам</h3>${rows(drinks) || '<p class="subtle">Нет заказов напитков к блюдам</p>'}<section class="galley-hot"><h3>Горячие напитки</h3>${rows(hot) || '<p class="subtle">Нет заказов горячих напитков</p>'}<h4>Добавки · по креслам</h4>${rows(addons) || '<p class="subtle">Добавки не заказаны</p>'}</section></section>`;
   };
   const aperitifs = Object.create(null);
   const cocktailCounts = Object.create(null);
@@ -4174,7 +4197,7 @@ function buildA5TableHtml() {
     const group = ids.slice(offset, offset + 6);
     blocks.push(`<section class="print-page"><h2>${S.manualSetup ? `База ${esc(SPECS[S.spec1Code]?.source?.base || '—')} · ${esc(CABIN_PRESETS[S.presetKey]?.name || 'Салон')}` : `FV ${esc(S.flightNo)} · ${esc(S.date)} · ${esc(fl.route)}`}</h2><p>Цикл ${S.cycle} · Кресла ${group[0]}–${group[group.length-1]} · ${esc(S.spec1Code)}${S.spec2Code ? " / " + esc(S.spec2Code) : ""}</p>
       <table class="orders-table"><thead><tr><th scope="col">Кресло / гость</th><th scope="col">Аперитив / пожелания</th><th scope="col">Питание 1</th>${S.spec2Code ? '<th scope="col">Питание 2</th>' : ""}</tr></thead><tbody>
-      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc(seat.name)}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
+      ${group.map(id => { const seat = getSeat(id); return `<tr><th scope="row">${esc(id)}<br>${esc(seat.name)}</th><td>${esc(drinkText(seat,"ap") || "—")}${seat.wake ? "<br>" + esc(seat.wake) : ""}${seat.allergy ? "<br><strong>⚠ Аллергии: " + esc(seat.allergy) + "</strong>" : ""}${seat.cvu ? "<br>" + esc(seat.cvu) : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? "<br>Планшет: " + esc(tabletLabel(seat)) : ""}</td><td>${coursePrint(seat.s1)}</td>${S.spec2Code ? "<td>"+coursePrint(seat.s2)+"</td>" : ""}</tr>`; }).join("")}
       </tbody></table><p class="print-foot">Конфиденциально · Данные пассажиров · Страница ${Math.floor(offset/6)+1}/${Math.ceil(ids.length/6)}</p></section>`);
   }
   return blocks.join("");
@@ -4187,10 +4210,11 @@ function buildOrderText() {
   getAllSeatIds().forEach(id => {
     if (!isSeatUsed(id)) return;
     const seat = getSeat(id);
-    out.push(`${id} ${seat.name} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}`);
+    out.push(`${id} ${seat.name} | Аперитив: ${drinkText(seat,"ap") || "—"}${seat.wake ? " | "+seat.wake : ""}${seat.allergy ? " | ⚠ Аллергии: "+seat.allergy : ""}${seat.cvu ? " | Пожелания: "+seat.cvu : ""}${typeof tabletLabel === "function" && seat.tablet !== undefined ? " | Планшет: "+tabletLabel(seat) : ""}`);
     [1,2].filter(n => n === 1 || S.spec2Code).forEach(n => {
       const sv = seat["s"+n];
-      out.push(`  П${n}: ${sv.z || "—"} (напитки: ${drinkText(sv,"zd") || "—"}) | ${sv.m || "—"} (напитки: ${drinkText(sv,"md") || "—"}) | ${drinkText(sv,"t") || "—"}${sv.tAddons?.length ? " (добавки: " + sv.tAddons.join(" · ") + ")" : ""} | ${statusLabel(sv.status)}`);
+      const extras = typeof serviceExtraRows === "function" ? serviceExtraRows(sv).map(([title,value]) => `${title}: ${value || "—"}`).join("; ") : "";
+      out.push(`  П${n}: ${sv.z || "—"} (напитки: ${drinkText(sv,"zd") || "—"}) | ${sv.m || "—"} (напитки: ${drinkText(sv,"md") || "—"}) | ${drinkText(sv,"t") || "—"}${sv.tAddons?.length ? " (добавки: " + sv.tAddons.join(" · ") + ")" : ""}${extras ? " | " + extras : ""} | ${statusLabel(sv.status)}`);
     });
   });
   return out.join("\n");
@@ -4330,11 +4354,13 @@ function legacyNormalizeState(raw, legacy = false) {
     if (!/^\d{1,3}[A-Z]$/.test(id) || !value || typeof value !== "object") throw new Error("Некорректное кресло");
     const seat = blankSeat();
     for (const key of ["title","name","ap","wake","cvu","allergy"]) seat[key] = value[key] == null ? "" : boundedText(value[key], key === "cvu" ? 1000 : key === "allergy" ? 500 : key === "name" ? 120 : 200);
+    if (typeof value.tablet === "boolean") seat.tablet = value.tablet;
     normalizeMoreDrinks(value, seat, "ap", 200);
     for (const n of [1,2]) {
       const sv = value["s"+n];
       if (!sv || typeof sv !== "object") throw new Error("Нет данных обслуживания");
       for (const key of ["z","zd","m","md","t"]) seat["s"+n][key] = boundedText(sv[key] == null ? "" : sv[key], 300);
+      for (const key of ["dessert","soup","salad","serving"]) seat["s"+n][key] = boundedText(sv[key] == null ? "" : sv[key], 300);
       seat["s"+n].tAddons = Array.isArray(sv.tAddons) ? [...new Set(sv.tAddons.filter(value => TEA_ADDONS.includes(value)))] : [];
       for (const key of ["zd","md","t"]) normalizeMoreDrinks(sv, seat["s"+n], key, 300);
       const status = sv.status || (legacy && value.served ? "served" : "pending");
@@ -4388,7 +4414,47 @@ function updateSaveStatus() {
   }
   document.getElementById("btnReload").hidden = !storageConflict;
 }
-function hasCourseOrder(course) { return !!(course.z || course.m || course.zd || course.md || course.t); }
+function hasCourseOrder(course) { return !!(course.z || course.m || course.zd || course.md || course.t || course.dessert || course.soup || course.salad); }
+const DESSERT_DECLINED = 'Отказ от десерта';
+function mealChoices(spec) {
+  const extra = {soup:[], salad:[], dessert:[], serving:[]};
+  if (!spec) return extra;
+  for (const item of spec.supplements || []) {
+    if (/(?:^|\s)суп(?:[\s-]|$)/i.test(item.short)) extra.soup.push(item.short);
+    if (/^салат\s/i.test(item.short)) extra.salad.push(item.short);
+  }
+  if (spec.soup) extra.soup.push(spec.soup);
+  const legacyCode = spec.code.replace(/^SVO:/, '');
+  if (!spec.code.includes(':') || spec.code.startsWith('SVO:')) {
+    if (legacyCode === 'HL200.1') extra.salad.push('Салат свежий с имбирным соусом');
+    if (legacyCode === 'HL200.2') extra.salad.push('Салат с грушей и адыгейским сыром');
+  }
+  if (spec.dessert?.trim()) extra.dessert.push(...spec.dessert.split(/\s+\/\s+/), DESSERT_DECLINED);
+  if (spec.starters?.length && spec.mains?.length && getFlightContext().isOver2h) extra.serving.push('Вместе','Раздельно');
+  return extra;
+}
+function serviceExtraRows(course) {
+  return [['Суп',course.soup],['Салат',course.salad],['Десерт',course.dessert],['Подача',course.serving]].filter(([,value]) => value);
+}
+function tabletLabel(seat) { return seat.tablet ? 'Выдано' : 'Не выдано'; }
+function serviceChoiceGroup(label, path, values, selected) {
+  if (!values.length) return '';
+  return `<section class="field-group"><p class="field-label">${label}</p><div class="chips" role="group" aria-label="${label}">${values.map(([value,text]) => `<button type="button" class="chip service-choice${selected === value ? ' on' : ''}" style="min-height:44px" data-path="${path}" data-val="${esc(value)}" aria-pressed="${selected === value}">${selected === value ? '✓ ' : ''}${esc(text)}</button>`).join('')}</div></section>`;
+}
+function renderTablet(seat) {
+  return serviceChoiceGroup('ЦВУ · бортовой планшет','tablet',[['issued','Выдано'],['returned','Не выдано']],seat.tablet ? 'issued' : 'returned');
+}
+function renderMealExtras(spec, course, prefix) {
+  const choices = mealChoices(spec);
+  return [['soup','Суп'],['salad','Салат'],['serving','Подача закуски и горячего'],['dessert','Десерт']].map(([key,label]) => serviceChoiceGroup(label,prefix+key,choices[key].map(value => [value,value]),course[key])).join('');
+}
+function renderWishes(seat, pair = false) {
+  const tags = ['Лёд 3 куб.','Лимон','Орехи NUTS','Канапе CA2','Дижестив Коньяк 75мл','Подать позже'];
+  return `<section class="field-group"><label class="field-label">${uiIcon('note')} Пожелания гостя<textarea class="ta" ${pair ? 'data-pair-field="cvu"' : 'id="inCvu"'} aria-label="Особые пожелания" maxlength="1000" placeholder="Особые пожелания гостя…">${esc(seat.cvu)}</textarea></label><div class="chips">${tags.map(tag => `<button type="button" class="chip" style="min-height:44px" data-add-cvu="${esc(tag)}">+ ${esc(tag)}</button>`).join('')}</div></section>`;
+}
+function addWish(seat, value) {
+  if (!seat.cvu.split(', ').includes(value)) seat.cvu = [seat.cvu,value].filter(Boolean).join(', ').slice(0,1000);
+}
 function statusLabel(status) { return ({ pending:"Заказ принят", later:"◷ Подать позже", served:"✓ Подано" })[status] || "Заказ принят"; }
 function seatSafetyNotice(seat) {
   return `${seat.allergy ? `<div class="safety-note allergy-alert" role="note"><strong>⚠ Аллергии / ограничения</strong><br>${esc(seat.allergy)}<br><small>Проверьте актуальную ТТК. Приложение не определяет безопасность блюда.</small></div>` : ""}${seat.cvu ? `<div class="seat-request"><strong>Пожелания:</strong> ${esc(seat.cvu)}</div>` : ""}${seat.wake === "Не будить" ? '<div class="seat-request">☾ Не будить. Подачу согласовать отдельно.</div>' : ""}`;
@@ -4397,7 +4463,9 @@ function renderServiceStatus(n, course) {
   return `<div class="service-status"><p class="field-label">Статус питания ${n}</p><div class="chips" role="group" aria-label="Статус питания ${n}">${[["pending","Принят"],["later","◷ Позже"],["served","✓ Подано"]].map(([key,label]) => `<button type="button" class="chip${course.status === key ? " on" : ""}" data-course-status="${n}:${key}" aria-pressed="${course.status === key}">${label}</button>`).join("")}</div></div>`;
 }
 function coursePrint(course) {
-  return `<strong>${esc(statusLabel(course.status))}</strong><br>Закуска: ${esc(course.z || "—")}<br>Напитки: ${esc(drinkText(course,"zd") || "—")}<br>Горячее: ${esc(course.m || "—")}<br>Напитки: ${esc(drinkText(course,"md") || "—")}<br>Чай / кофе: ${esc(drinkText(course,"t") || "—")}${course.tAddons?.length ? `<br>Добавки: ${esc(course.tAddons.join(" · "))}` : ""}`;
+  const extra = typeof serviceExtraRows === "function" ? serviceExtraRows(course) : [];
+  const extraText = extra.map(([title, value]) => `<br>${esc(title)}: ${esc(value || "—")}`).join("");
+  return `<strong>${esc(statusLabel(course.status))}</strong><br>Закуска: ${esc(course.z || "—")}<br>Напитки: ${esc(drinkText(course,"zd") || "—")}<br>Горячее: ${esc(course.m || "—")}<br>Напитки: ${esc(drinkText(course,"md") || "—")}<br>Чай / кофе: ${esc(drinkText(course,"t") || "—")}${course.tAddons?.length ? `<br>Добавки: ${esc(course.tAddons.join(" · "))}` : ""}${extraText}`;
 }
 function clearCourses() {
   for (const seat of Object.values(S.seats)) {
@@ -4543,9 +4611,10 @@ function applyOrderChoice(path, value) {
   const parts = path.split(".");
   if (parts.length === 2) {
     const [course,field] = parts;
-    if (!["s1","s2"].includes(course) || !["z","zd","m","md","t"].includes(field)) return;
+    if (!["s1","s2"].includes(course) || !["z","zd","m","md","t","dessert","soup","salad","serving"].includes(field)) return;
     const sv = seat[course];
     const selecting = sv[field] !== value;
+    if (["dessert","soup","salad","serving"].includes(field) && !mealChoices(SPECS[S["spec"+course[1]+"Code"]])[field].includes(value)) return false;
     if (selecting && ["z","m"].includes(field)) {
       const stat = getCourseDishStats(Number(course[1]), field).find(x => x.short === value);
       if (!stat) return;
@@ -4561,6 +4630,9 @@ function applyOrderChoice(path, value) {
     if (!toggleDrink(seat,"ap",value)) return;
   } else if (["title","wake"].includes(path)) {
     seat[path] = seat[path] === value ? "" : value;
+  } else if (path === "tablet") {
+    if (!["issued","returned"].includes(value) || !!seat.tablet === (value === "issued")) return false;
+    seat.tablet = value === "issued";
   } else return false;
   return true;
 }
@@ -4739,9 +4811,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const note = e.target.closest("[data-add-cvu]");
     if (note) {
       const seat = getSeat(activeSeatId); const value = note.dataset.addCvu;
-      const notes = seat.cvu.split(", ");
-      if (!notes.includes(value)) seat.cvu = (seat.cvu ? seat.cvu+", " : "")+value;
-      seat.cvu = seat.cvu.slice(0,1000); saveState(); renderAll(); return;
+      addWish(seat,value); saveState(); renderAll(); return;
     }
     if (e.target.closest("#btnClearSeat")) {
       const before = clone(S); S.seats[activeSeatId] = blankSeat(); saveState(); renderAll(); offerUndo("Заказ кресла " + activeSeatId + " очищен",before); return;
@@ -4755,9 +4825,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const seat = getSeat(activeSeatId); seat[key] = e.target.value; saveState();
     const progress = byId("soloProgress"); if (progress) progress.innerHTML = renderSeatProgress(seat);
     if (activeTab === "cabin") { rememberMapScroll(); byId("mainView").innerHTML = viewCleanCabin(); restoreMapScroll(); }
-    const view = captureOrderEntryView();
-    renderStepSheet();
-    finishOrderEntryView(view);
+    refreshGuestSummary(seat);
   });
   byId("modalBack").addEventListener("click",e => {
     if (e.target.id === "modalBack" || e.target.closest("[data-close-modal]")) { closeModal(); return; }
